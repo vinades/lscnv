@@ -1,0 +1,129 @@
+<?php
+
+/**
+ * @Project 123HOST LSCache for Nukeviet 4
+ * @Author 123host <tanviet@123host.vn>
+ * @Copyright (C) 2017 123host. All rights reserved
+ * @License: GNU/GPL version 2 or any later version
+ * @Createdate Fri, 11 Aug 2017 09:48:43 GMT
+ */
+
+if ( ! defined( 'NV_IS_FILE_ADMIN' ) ) die( 'Stop!!!' );
+
+$xtpl = new XTemplate( $op . '.tpl', NV_ROOTDIR . '/themes/' . $global_config['module_theme'] . '/modules/' . $module_file );
+$xtpl->assign( 'LANG', $lang_module );
+$xtpl->assign( 'NV_LANG_VARIABLE', NV_LANG_VARIABLE );
+$xtpl->assign( 'NV_LANG_DATA', NV_LANG_DATA );
+$xtpl->assign( 'NV_BASE_ADMINURL', NV_BASE_ADMINURL );
+$xtpl->assign( 'NV_NAME_VARIABLE', NV_NAME_VARIABLE );
+$xtpl->assign( 'NV_OP_VARIABLE', NV_OP_VARIABLE );
+$xtpl->assign( 'MODULE_NAME', $module_name );
+$xtpl->assign( 'OP', $op );
+
+try {
+    $query = "SELECT config_value FROM " . NV_PREFIXLANG . "_" . $module_data . "_config WHERE config_name='public_cache_ttl'";
+    $row = $db->query($query)->fetch();
+    $publicCacheTTL = $row['config_value'];
+} catch( PDOException $e ) {
+    trigger_error( $e->getMessage() );
+}
+
+try {
+    $query = "SELECT config_value FROM " . NV_PREFIXLANG . "_" . $module_data . "_config WHERE config_name='front_page_cache_ttl'";
+    $row = $db->query($query)->fetch();
+    $frontPageCacheTTL = $row['config_value'];
+} catch( PDOException $e ) {
+    trigger_error( $e->getMessage() );
+}
+
+try {
+    $query = "SELECT config_value FROM " . NV_PREFIXLANG . "_" . $module_data . "_config WHERE config_name='cache_login_page'";
+    $row = $db->query($query)->fetch();
+    $cacheLoginPage = $row['config_value'];
+} catch( PDOException $e ) {
+    trigger_error( $e->getMessage() );
+}
+
+
+
+
+try {
+    $query = "SELECT config_value FROM " . NV_PREFIXLANG . "_" . $module_data . "_config WHERE config_name='cache_favicon'";
+    $row = $db->query($query)->fetch();
+    $cacheFavicon = $row['config_value'];
+} catch( PDOException $e ) {
+    trigger_error( $e->getMessage() );
+}
+
+
+
+$newPublicCacheTTL = $nv_Request->get_int('public_cache_ttl', 'post');
+$newFrontPageCacheTTL = $nv_Request->get_int('front_page_cache_ttl', 'post');
+
+$newCacheLoginPage = $nv_Request->get_int('cache_login_page', 'post');
+$newCacheFavicon = $nv_Request->get_int('cache_favicon', 'post');
+
+if ($newPublicCacheTTL != 0) {
+    try {
+        $query = "UPDATE " . NV_PREFIXLANG . "_" . $module_data . "_config SET config_value='" . $newPublicCacheTTL ."' WHERE config_name='public_cache_ttl'";
+        $row = $db->prepare($query); 
+        $row->execute();
+
+        $query = "UPDATE " . NV_PREFIXLANG . "_" . $module_data . "_config SET config_value='" . $newFrontPageCacheTTL ."' WHERE config_name='front_page_cache_ttl'";
+        $row = $db->prepare($query); 
+        $row->execute();
+        
+        $query = "UPDATE " . NV_PREFIXLANG . "_" . $module_data . "_config SET config_value='" . $newCacheLoginPage ."' WHERE config_name='cache_login_page'";
+        $row = $db->prepare($query); 
+        $row->execute();
+
+        $query = "UPDATE " . NV_PREFIXLANG . "_" . $module_data . "_config SET config_value='" . $newCacheFavicon ."' WHERE config_name='cache_favicon'";
+        $row = $db->prepare($query); 
+        $row->execute();
+    } catch( PDOException $e ) {
+        trigger_error( $e->getMessage() );
+    }
+    $xtpl->assign( 'MESSAGE', "<div class=\"notice notice-success is-dismissible\"> <p> Cập nhật thành công</p> </div>" );
+    $xtpl->assign( 'PUBLIC_CACHE_TTL', $newPublicCacheTTL );
+    $xtpl->assign( 'FRONT_PAGE_CACHE_TTL', $newFrontPageCacheTTL );
+
+    if ($newCacheLoginPage == '0') {
+        $xtpl->assign( 'DISABLE_CACHE_LOGIN_PAGE_CHECKED',"checked");
+    } else {
+       $xtpl->assign( 'ENABLE_CACHE_LOGIN_PAGE_CHECKED',"checked");
+    }
+    
+    if ($newCacheFavicon == '0') {
+        $xtpl->assign( 'DISABLE_CACHE_FAVICON_CHECKED',"checked");
+    } else {
+       $xtpl->assign( 'ENABLE_CACHE_FAVICON_CHECKED',"checked");
+    }
+
+} else {
+    $xtpl->assign( 'PUBLIC_CACHE_TTL', $publicCacheTTL );
+    $xtpl->assign( 'FRONT_PAGE_CACHE_TTL', $frontPageCacheTTL );
+
+    if ($cacheLoginPage == '0') {
+        $xtpl->assign( 'DISABLE_CACHE_LOGIN_PAGE_CHECKED',"checked");
+    } else {
+       $xtpl->assign( 'ENABLE_CACHE_LOGIN_PAGE_CHECKED',"checked");
+    }
+
+    if ($cacheFavicon == '0') {
+        $xtpl->assign( 'DISABLE_CACHE_FAVICON_CHECKED',"checked");
+    } else {
+       $xtpl->assign( 'ENABLE_CACHE_FAVICON_CHECKED',"checked");
+    }
+}
+
+
+
+
+$xtpl->parse( 'config' );
+$contents = $xtpl->text( 'config' );
+
+$page_title = $lang_module['config'];
+
+include NV_ROOTDIR . '/includes/header.php';
+echo nv_admin_theme( $contents );
+include NV_ROOTDIR . '/includes/footer.php';
