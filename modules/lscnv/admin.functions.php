@@ -8,7 +8,7 @@
  * @Createdate Fri, 11 Aug 2017 09:48:43 GMT
  */
 
-if ( ! defined( 'NV_ADMIN' ) or ! defined( 'NV_mMAINFILE' ) or ! defined( 'NV_IS_MODADMIN' ) ) die( 'Stop!!!' );
+if ( ! defined( 'NV_ADMIN' ) or ! defined( 'NV_MAINFILE' ) or ! defined( 'NV_IS_MODADMIN' ) ) die( 'Stop!!!' );
 
 define( 'NV_IS_FILE_ADMIN', true );
 
@@ -21,10 +21,11 @@ $allow_func = array( 'main', 'config', 'info', 'init' );
         - Các file cần thiết phải tồn tại và ghi được
 */
 function checkRequirement($nvCurrentVersion,&$message) {
+    global $lang_module;
     // Nukeviet versions are supported
     $arrayVersion = explode('.', $nvCurrentVersion);
     if ($arrayVersion[0] < 4) {
-        $message = 'Module này chỉ hỗ trợ phiên bản Nukeviet 4.0 trở lên. Vui lòng liên hệ support@123host.vn để được hỗ trợ!';
+        $message = $lang_module['123host_version_error'];
         return FALSE;
     }
     // Files must exist and writeable
@@ -39,15 +40,15 @@ function checkRequirement($nvCurrentVersion,&$message) {
 
     foreach ($filesNeedToWrite as $file) {
         if (!is_writable($file)) {
-            $message = $message . "<br><i>" . 'File <strong>' . $file . '</strong> không tồn tại hoặc không có quyền ghi!</i>';
+            $message = $message . "<br><i>" . 'File <strong>' . $file . '</strong>' . $lang_module['123host_file_not_exist_or_write'] . '</i>';
         }
     }
 
     if ($message) {
-        $message = $message . " <br> Hệ thống không đáp ứng yêu cầu. Module cache có thể không khởi động được hoặc không thực hiện được hết các tính năng cần thiết!";
+        $message = $message . $lang_module['123host_system_not_meet'];
         return FALSE;
     } else {
-         $message = 'Xin chúc mừng. Hệ thống đáp ứng tất cả các yêu cầu!';
+        $message = $lang_module['123host_system_meet'];
         return TRUE;
     }
 }
@@ -56,7 +57,7 @@ function checkRequirement($nvCurrentVersion,&$message) {
     Build rewrite rule và Bật rewrite cache tại file .htaccess
 */
 function enableCacheRewrite($publicCacheTTL, $frontPageCacheTTL, $cacheLoginPage, $cacheFavicon ,&$message) {
-
+    global $lang_module;
     $htaccessFile = NV_ROOTDIR . '/.htaccess';
 
     if ($cacheLoginPage == 1) {
@@ -107,11 +108,11 @@ function enableCacheRewrite($publicCacheTTL, $frontPageCacheTTL, $cacheLoginPage
 
     // Append content to .htaccess file
     if (file_put_contents($htaccessFile, $newRewriteContent, LOCK_EX)) {
-        $message =  "Bật cache thành công";
+        $message =  $lang_module['123host_enable_cache_success'];
         return TRUE;
     } 
     else {
-        $message = "Lỗi trong quá trình bật cache. Vui lòng đảm bảo rằng file .htaccess có quyền ghi!";
+        $message = $lang_module['123host_enable_cache_failure'];
         return FALSE;
     }
 
@@ -122,6 +123,7 @@ function enableCacheRewrite($publicCacheTTL, $frontPageCacheTTL, $cacheLoginPage
         Xóa tất cả các rewrite rule cache
 */
 function disableCacheRewrite(&$message) {
+    global $lang_module;
     $htaccessFile = NV_ROOTDIR . '/.htaccess';
 
     /** Try to delete 123HOST LSCache content from .htaccess file **/
@@ -146,15 +148,15 @@ function disableCacheRewrite(&$message) {
             }
         } 
         if(file_put_contents($htaccessFile, implode("", $contentByLine), LOCK_EX)) {
-            $message = "Tắt cache thành công";
+            $message = $lang_module['123host_disable_cache_success'];
             return TRUE;
         } 
         else {
-            $message = "Lỗi trong quá trình tắt cache! <a href='" . NV_BASE_ADMINURL . 'index.php?' . NV_LANG_VARIABLE . '=' . NV_LANG_DATA . '&amp;' . NV_NAME_VARIABLE . '=lscnv&amp;' . NV_OP_VARIABLE . '=main' . '&amp;' . 'action=checkRequirement' . "'> Click vào đây để kiểm tra tính tương thích của hệ thống! </a>";
+            $message = $lang_module['123host_disable_cache_failure'] . " <a href='" . NV_BASE_ADMINURL . 'index.php?' . NV_LANG_VARIABLE . '=' . NV_LANG_DATA . '&amp;' . NV_NAME_VARIABLE . '=lscnv&amp;' . NV_OP_VARIABLE . '=main' . '&amp;' . 'action=checkRequirement' . "'>"  . $lang_module['123host_check_check_req']  . "</a>";
             return FALSE;
         }
     } else {
-            $message = "Lỗi trong quá trình tắt cache! <a href='" . NV_BASE_ADMINURL . 'index.php?' . NV_LANG_VARIABLE . '=' . NV_LANG_DATA . '&amp;' . NV_NAME_VARIABLE . '=lscnv&amp;' . NV_OP_VARIABLE . '=main' . '&amp;' . 'action=checkRequirement' . "'> Click vào đây để kiểm tra tính tương thích của hệ thống! </a>";
+            $message = $lang_module['123host_disable_cache_failure'] . "<a href='" . NV_BASE_ADMINURL . 'index.php?' . NV_LANG_VARIABLE . '=' . NV_LANG_DATA . '&amp;' . NV_NAME_VARIABLE . '=lscnv&amp;' . NV_OP_VARIABLE . '=main' . '&amp;' . 'action=checkRequirement' . "'>"  . $lang_module['123host_check_check_req']  . " </a>";
             return FALSE;
     }
 }
@@ -164,6 +166,7 @@ function disableCacheRewrite(&$message) {
     Fix các file admin_login.php và admin_logout.php để hỗ trợ cache cho Nukeviet
 */
 function addCookieHandle(&$message) {
+    global $lang_module;
 
     $adminLogin = NV_ROOTDIR . '/includes/core/admin_login.php';
     $adminLogout = NV_ROOTDIR . '/includes/core/admin_logout.php';
@@ -204,10 +207,10 @@ function addCookieHandle(&$message) {
 
     
     if(file_put_contents($adminLogout, implode("", $contentByLine), LOCK_EX)) {
-        $message = "Khởi tạo hệ thống Cache thành công!";
+        $message = $lang_module['123host_init_cache_success'];
         return TRUE;
     } else {
-        $message = "Khởi tạo hệ thống Cache thất bại!";
+        $message = $lang_module['123host_init_cache_failure'];
         return FALSE;
     }
     
@@ -218,6 +221,7 @@ function addCookieHandle(&$message) {
     Run lúc uninstall module để gỡ bỏ module
 */
 function removeCookieHandle(&$message) {
+    global $lang_module;
 
     /* Remove Cookie Handle in admin LOGIN file */
     $adminLoginFile = NV_ROOTDIR . '/includes/core/admin_login.php';
@@ -295,6 +299,7 @@ function removeCookieHandle(&$message) {
     Fix file vendor/vinades/nukeviet/Cache/Files.php để hỗ trợ call đến purge cache lúc có sự thay đổi trên hệ thống (như đăng bài, sửa bài, sửa module)
 */
 function addPurgeCacheHandle(&$message) {
+    global $lang_module;
     
     $cacheFile = NV_ROOTDIR . '/vendor/vinades/nukeviet/Cache/Files.php';
 
@@ -317,7 +322,7 @@ function addPurgeCacheHandle(&$message) {
     array_splice( $contentByLine, $insertLineNum, 0, $contentFunction ); 
         
     if(!file_put_contents($cacheFile, implode("", $contentByLine), LOCK_EX)){
-        $message = "Kích hoạt cache thất bại. Không thể hiệu chỉnh file " . $cacheFile;
+        $message = $lang_module['123host_edit_file_failure'] . $cacheFile;
         return FALSE;
     }
       
@@ -334,16 +339,17 @@ function addPurgeCacheHandle(&$message) {
     }
 
     if(file_put_contents($cacheFile, implode("", $contentByLine), LOCK_EX)) {
-        $message = "Hiệu chỉnh file " . $cacheFile . " thành công!";
+        $message = $lang_module['123host_edit_file'] . $cacheFile . $lang_module['123host_success'];
         return TRUE;
     } else {
-        $message = "Lỗi: Không thể hiệu chỉnh file " . $cacheFile;
+        $message = $lang_module['123host_edit_file_failure'] . $cacheFile;
         return FALSE;
     }
         
 }
 
 function removePurgeCacheHandle(&$message) {
+    global $lang_module;
     
     $cacheFile = NV_ROOTDIR . '/vendor/vinades/nukeviet/Cache/Files.php';        
     
@@ -376,12 +382,12 @@ function removePurgeCacheHandle(&$message) {
                 }
             } 
             if(!file_put_contents($cacheFile, implode("", $contentByLine), LOCK_EX)){
-                $message = "Lỗi: Không thể hiệu chỉnh file " . $cacheFile;
+                $message = $lang_module['123host_edit_file_failure'] . $cacheFile;
                 return FALSE;
             }
         }
     }
-    $message = "Hiệu chỉnh file " . $cacheFile . " thành công!";
+    $message = $lang_module['123host_edit_file'] . $cacheFile . $lang_module['123host_success'];
     return TRUE;
 }
 

@@ -3,34 +3,34 @@
 <div class="wrap">
 	<div>
 		<h2 class="nav-tab-wrapper">
-			<a class="nav-tab litespeed-tab" href="#general" data-litespeed-tab="general">Cấu hình chung</a>
-			<a class="nav-tab litespeed-tab nav-tab-active" href="#specific" data-litespeed-tab="specific">Chỉ định cho trang</a>
+			<a class="nav-tab litespeed-tab" href="#general" data-litespeed-tab="general">{LANG.123host_general_config}</a>
+			<a class="nav-tab litespeed-tab nav-tab-active" href="#specific" data-litespeed-tab="specific">{LANG.123host_specific_pages}</a>
 		</h2>
 	</div>
 	<div class="litespeed-cache-welcome-panel">
 		<p>{MESSAGE}</p>
 		<form method="post" action="" id="litespeed_form_options">
 			<div data-litespeed-layout="general" style="display: none;">
-				<h3 class="litespeed-title">Thông tin</h3>
+				<h3 class="litespeed-title">{LANG.123host_information}</h3>
 
 				<table class="form-table">
 					<tbody>
 
 						<tr>
-							<th>Thời gian lưu Cache chung</th>
+							<th>{LANG.123host_public_cache_ttl}</th>
 							<td>
-								<input type="text" class="regular-text " name="public_cache_ttl" value="{PUBLIC_CACHE_TTL}"> giây
+								<input type="text" class="regular-text " name="public_cache_ttl" value="{PUBLIC_CACHE_TTL}"> {LANG.123host_seconds}
 								<div class="litespeed-desc">
-									Điền số, đơn vị tính là giây cho thời gian lưu cache chung. Tối thiểu 30 giây. Giá trị đề xuất là 7 ngày: 604800
+									{LANG.123host_front_cache_ttl_des}
 								</div>
 							</td>
 						</tr>
 						<tr>
-							<th>Thời gian lưu cache trang chủ</th>
+							<th>{LANG.123host_front_cache_ttl}</th>
 							<td>
-								<input type="text" class="regular-text " name="front_page_cache_ttl" value="{FRONT_PAGE_CACHE_TTL}"> giây
+								<input type="text" class="regular-text " name="front_page_cache_ttl" value="{FRONT_PAGE_CACHE_TTL}"> {LANG.123host_seconds}
 								<div class="litespeed-desc">
-									Điền số, đơn vị tính là giây cho thời gian lưu cache của trang chủ. Tối thiểu 30 giây. Giá trị đề xuất là 7 ngày: 604800
+									{LANG.123host_front_cache_ttl_des}
 									</div>
 							</td>
 						</tr>
@@ -38,37 +38,37 @@
 				</table>
 			</div>
 			<div data-litespeed-layout="specific" style="display: block;">
-				<h3 class="litespeed-title">Thông tin</h3>
+				<h3 class="litespeed-title">{LANG.123host_information}</h3>
 				<table class="form-table">
 					<tbody>
 						<tr>
-							<th>Cache cho Login Page</th>
+							<th>{LANG.123host_cache_login_page}</th>
 							<td>
 								<div class="litespeed-row">
 									<div class="litespeed-switch litespeed-label-info">
 										<input type="radio" name="cache_login_page" id="conf_cache_login_1" value="1" {ENABLE_CACHE_LOGIN_PAGE_CHECKED}>
-										<label for="conf_cache_login_1">Enable</label>
+										<label for="conf_cache_login_1">{LANG.123host_enable}</label>
 										<input type="radio" name="cache_login_page" id="conf_cache_login_0"
 										    value="0" {DISABLE_CACHE_LOGIN_PAGE_CHECKED}>
-										<label for="conf_cache_login_0">Disable</label>
+										<label for="conf_cache_login_0">{LANG.123host_disable}</label>
 									</div>
 								</div>
 								<div class="litespeed-desc">
-									Tùy chọn tắt hay bật Cache cho trang login của admin và user. </div>
+									{LANG.123host_cache_login_page_des} </div>
 							</td>
 						</tr>
 						<tr>
-							<th>Cache cho favicon.ico</th>
+							<th>{LANG.123host_cache_favicon}</th>
 							<td>
 								<div class="litespeed-row">
 									<div class="litespeed-switch litespeed-label-info">
 										<input type="radio" name="cache_favicon" id="conf_cache_favicon_1" value="1" {ENABLE_CACHE_FAVICON_CHECKED}>
-										<label for="conf_cache_favicon_1">Enable</label>
+										<label for="conf_cache_favicon_1">{LANG.123host_enable}</label>
 										<input type="radio" name="cache_favicon"  id="conf_cache_favicon_0" value="0"  {DISABLE_CACHE_FAVICON_CHECKED}> 
-										<label for="conf_cache_favicon_0">Disable</label> </div>
+										<label for="conf_cache_favicon_0">{LANG.123host_disable}</label> </div>
 								</div>
 								<div class="litespeed-desc">
-									Bật hay tắt cache cho favicon.ico . Khuyến cáo nên bật để tăng hiệu năng.</div>
+									{LANG.123host_cache_favicon_des}</div>
 							</td>
 						</tr>
 						<!-- build_setting_cache_resources -->
@@ -77,7 +77,7 @@
 			</div>
 
 			<div class="litespeed-top20"></div>
-			<p class="submit"><input type="submit" name="litespeed-submit" id="litespeed-submit" class="btn btn-primary" value="Save Changes"></p>
+			<p class="submit"><input type="submit" name="litespeed-submit" id="litespeed-submit" class="btn btn-primary" value="{LANG.save}"></p>
 		</form>
 	</div>
 </div>

@@ -18,7 +18,7 @@ $lang_translator['langtype'] = 'lang_module';
 
 $lang_module['main'] = 'Quản lý Cache';
 $lang_module['config'] = 'Cấu hình';
-$lang_module['save'] = 'Save';
+$lang_module['save'] = 'Lưu lại';
 $lang_module['manage'] = 'Quản lý Cache';
 $lang_module['info'] = 'Hướng dẫn';
 
@@ -38,10 +38,12 @@ $lang_module['123host_status_enabled'] = "ĐANG BẬT";
 $lang_module['123host_status_disable'] = "ĐANG TẮT";
 $lang_module['123host_enable_cache'] = "Bật Cache";
 $lang_module['123host_disable_cache'] = "Tắt Cache";
+$lang_module['123host_enable'] = "Bật";
+$lang_module['123host_disable'] = "Tắt";
 $lang_module['123host_settings_saved'] = "Cập nhật thành công";
 $lang_module['123host_version_error'] = "Module này chỉ hỗ trợ phiên bản Nukeviet 4.0 trở lên. Vui lòng liên hệ support@123host.vn để được hỗ trợ!";
 $lang_module['123host_file_not_exist_or_write'] = " không tồn tại hoặc không có quyền ghi.";
-$lang_module['123host_system_not_meet'] = "Hệ thống không đáp ứng yêu cầu. Module cache có thể không khởi động được hoặc không thực hiện được hết các tính năng cần thiết!";
+$lang_module['123host_system_not_meet'] = " <br> Hệ thống không đáp ứng yêu cầu. Module cache có thể không khởi động được hoặc không thực hiện được hết các tính năng cần thiết!";
 
 $lang_module['123host_system_meet'] = "Xin chúc mừng. Hệ thống đáp ứng tất cả các yêu cầu!";
 $lang_module['123host_enable_cache_success'] = "Bật cache thành công";
@@ -117,7 +119,10 @@ $lang_module['123host_cache_management_des1'] = "<p> Tính năng này tại menu
 </ul>
 <p>Sau khi xóa Cache, cache mới sẽ được tạo nếu trạng thái Cache đang bật.</p>
 <p>Nếu đăng tin hoặc sửa tin tức hoặc thực hiện các hành động trong module bất kỳ, <strong>hệ thống sẽ tự động xóa Cache</strong> và chúng ta không cần làm gì thêm!.</p>";
-
+$lang_module['123host_general_config_des1'] = "<ul>
+<li><strong>Thời gian lưu Cache chung:</strong> Là thời gian tối đa lưu cache cho tất cả các URL (trừ URL trang chủ). Quá thời gian này Cache sẽ hết hạn và hệ thống sẽ cập nhật Cache mới.</li>
+<li><strong>Thời gian lưu cache trang chủ:</strong> Là thời gian lưu Cache cho Trang chủ. URL là / </li>
+</ul>";
 $lang_module['123host_specific_pages'] = "Chỉ định cho trang";
 $lang_module['123host_specific_pages_des1'] = "<ul>
 <li><strong>Cache cho Login Page:</strong> Bật hoặc tắt Cache cho trang Login. Mặc định là /admin hoặc /users. Nếu bạn đang tùy chỉnh đường dẫn đăng nhập admin, module sẽ tự cập nhật mà không cần làm gì thêm.</li>
@@ -134,3 +139,5 @@ $lang_module['123host_support_info_des1'] = "<h4>Mọi thông tin hỗ trợ vui
     <li><strong>SDT: 02873 002 123</strong> support@123host.vn</li><br>
     <li><strong>Ticket:</strong> <a href=\"https://client.123host.vn/?/tickets/new/&dept_id=1\" target=\"_blank\"> Gởi ticket hỗ trợ</a></li>
 </ul>";
+$lang_module['123host_check_compatibility'] = "Kiểm tra tương thích";
+$lang_module['123host_seconds'] = "giây";

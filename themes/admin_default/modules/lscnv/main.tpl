@@ -7,7 +7,7 @@
 		<table class="form-table">
 			<tbody>
 			<tr>
-					<th>Trạng thái Cache</th>
+					<th>{LANG.123host_cache_statuss}</th>
 					<td>
 						{CACHE_STATUS} 
 					</td>
@@ -25,11 +25,11 @@
 				</tr> -->
 				
 				<tr>
-					<th>Bật/ Tắt Cache</th>
+					<th>{LANG.123host_cache_action}</th>
 					<td>
 						{CACHE_BUTTON}
 						<div class="litespeed-desc">
-							Bật/Tắt cache	
+							{LANG.123host_cache_action}
 						</div>
 					</td>
 				</tr>

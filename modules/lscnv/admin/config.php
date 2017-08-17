@@ -29,7 +29,7 @@ $xtpl->assign( 'OP', $op );
 */
 
 try {
-    $query = "SELECT config_value FROM " . NV_PREFIXLANG . "_" . $module_data . "_config WHERE config_name='cache_status'";
+    $query = "SELECT config_value FROM " . $db_config['prefix'] . "_" . $module_data . "_config WHERE config_name='cache_status'";
     $row = $db->query($query)->fetch();
     $cacheStatus = $row['config_value'];
 } catch( PDOException $e ) {
@@ -37,7 +37,7 @@ try {
 }
 
 try {
-    $query = "SELECT config_value FROM " . NV_PREFIXLANG . "_" . $module_data . "_config WHERE config_name='public_cache_ttl'";
+    $query = "SELECT config_value FROM " . $db_config['prefix'] . "_" . $module_data . "_config WHERE config_name='public_cache_ttl'";
     $row = $db->query($query)->fetch();
     $publicCacheTTL = $row['config_value'];
 } catch( PDOException $e ) {
@@ -45,7 +45,7 @@ try {
 }
 
 try {
-    $query = "SELECT config_value FROM " . NV_PREFIXLANG . "_" . $module_data . "_config WHERE config_name='front_page_cache_ttl'";
+    $query = "SELECT config_value FROM " . $db_config['prefix'] . "_" . $module_data . "_config WHERE config_name='front_page_cache_ttl'";
     $row = $db->query($query)->fetch();
     $frontPageCacheTTL = $row['config_value'];
 } catch( PDOException $e ) {
@@ -53,7 +53,7 @@ try {
 }
 
 try {
-    $query = "SELECT config_value FROM " . NV_PREFIXLANG . "_" . $module_data . "_config WHERE config_name='cache_login_page'";
+    $query = "SELECT config_value FROM " . $db_config['prefix'] . "_" . $module_data . "_config WHERE config_name='cache_login_page'";
     $row = $db->query($query)->fetch();
     $cacheLoginPage = $row['config_value'];
 } catch( PDOException $e ) {
@@ -61,7 +61,7 @@ try {
 }
 
 try {
-    $query = "SELECT config_value FROM " . NV_PREFIXLANG . "_" . $module_data . "_config WHERE config_name='cache_favicon'";
+    $query = "SELECT config_value FROM " . $db_config['prefix'] . "_" . $module_data . "_config WHERE config_name='cache_favicon'";
     $row = $db->query($query)->fetch();
     $cacheFavicon = $row['config_value'];
 } catch( PDOException $e ) {
@@ -83,19 +83,19 @@ if ($newPublicCacheTTL != 0) {
 
     /* Insert dữ liệu mới từ form vào CSDL */
     try {
-        $query = "UPDATE " . NV_PREFIXLANG . "_" . $module_data . "_config SET config_value='" . $newPublicCacheTTL ."' WHERE config_name='public_cache_ttl'";
+        $query = "UPDATE " . $db_config['prefix'] . "_" . $module_data . "_config SET config_value='" . $newPublicCacheTTL ."' WHERE config_name='public_cache_ttl'";
         $row = $db->prepare($query); 
         $row->execute();
 
-        $query = "UPDATE " . NV_PREFIXLANG . "_" . $module_data . "_config SET config_value='" . $newFrontPageCacheTTL ."' WHERE config_name='front_page_cache_ttl'";
+        $query = "UPDATE " . $db_config['prefix'] . "_" . $module_data . "_config SET config_value='" . $newFrontPageCacheTTL ."' WHERE config_name='front_page_cache_ttl'";
         $row = $db->prepare($query); 
         $row->execute();
         
-        $query = "UPDATE " . NV_PREFIXLANG . "_" . $module_data . "_config SET config_value='" . $newCacheLoginPage ."' WHERE config_name='cache_login_page'";
+        $query = "UPDATE " . $db_config['prefix'] . "_" . $module_data . "_config SET config_value='" . $newCacheLoginPage ."' WHERE config_name='cache_login_page'";
         $row = $db->prepare($query); 
         $row->execute();
 
-        $query = "UPDATE " . NV_PREFIXLANG . "_" . $module_data . "_config SET config_value='" . $newCacheFavicon ."' WHERE config_name='cache_favicon'";
+        $query = "UPDATE " . $db_config['prefix'] . "_" . $module_data . "_config SET config_value='" . $newCacheFavicon ."' WHERE config_name='cache_favicon'";
         $row = $db->prepare($query); 
         $row->execute();
     } catch( PDOException $e ) {

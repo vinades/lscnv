@@ -21,6 +21,7 @@ $xtpl->assign( 'MODULE_NAME', $module_name );
 $xtpl->assign( 'OP', $op );
 
 
+
 /* 
     Lấy các giá trị cấu hình cache tại table _config của module 
         $publicCacheTTL : Thời gian cache chung (giây)
@@ -29,7 +30,7 @@ $xtpl->assign( 'OP', $op );
         $cacheFavicon : Có cache Favicon hay không
 */
 try {
-    $query = "SELECT config_value FROM " . NV_PREFIXLANG . "_" . $module_data . "_config WHERE config_name='public_cache_ttl'";
+    $query = "SELECT config_value FROM " . $db_config['prefix'] . "_" . $module_data . "_config WHERE config_name='public_cache_ttl'";
     $row = $db->query($query)->fetch();
     $publicCacheTTL = $row['config_value'];
 } catch( PDOException $e ) {
@@ -37,7 +38,7 @@ try {
 }
 
 try {
-    $query = "SELECT config_value FROM " . NV_PREFIXLANG . "_" . $module_data . "_config WHERE config_name='front_page_cache_ttl'";
+    $query = "SELECT config_value FROM " . $db_config['prefix'] . "_" . $module_data . "_config WHERE config_name='front_page_cache_ttl'";
     $row = $db->query($query)->fetch();
     $frontPageCacheTTL = $row['config_value'];
 } catch( PDOException $e ) {
@@ -45,7 +46,7 @@ try {
 }
 
 try {
-    $query = "SELECT config_value FROM " . NV_PREFIXLANG . "_" . $module_data . "_config WHERE config_name='cache_login_page'";
+    $query = "SELECT config_value FROM " . $db_config['prefix'] . "_" . $module_data . "_config WHERE config_name='cache_login_page'";
     $row = $db->query($query)->fetch();
     $cacheLoginPage = $row['config_value'];
 } catch( PDOException $e ) {
@@ -53,7 +54,7 @@ try {
 }
 
 try {
-    $query = "SELECT config_value FROM " . NV_PREFIXLANG . "_" . $module_data . "_config WHERE config_name='cache_favicon'";
+    $query = "SELECT config_value FROM " . $db_config['prefix'] . "_" . $module_data . "_config WHERE config_name='cache_favicon'";
     $row = $db->query($query)->fetch();
     $cacheFavicon = $row['config_value'];
 } catch( PDOException $e ) {
@@ -71,19 +72,16 @@ $action = $nv_Request->get_title('action', 'get');
 switch ($action) {
     // $action = enableCache : Thực hiện bật Cache cho Nukeviet
     case "enableCache":
-        // Có phải lần đầu tiên thực hiện bật không?
-        $firstRun = 0;
-
         // Lấy giá trị first_run trong CSDL để biết có phải lần đầu tiên bật Cache không.
         try {
-            $query = "SELECT config_value FROM " . NV_PREFIXLANG . "_" . $module_data . "_config WHERE config_name='first_run'";
+            $query = "SELECT config_value FROM " . $db_config['prefix'] . "_" . $module_data . "_config WHERE config_name='first_run'";
             $row = $db->query($query)->fetch();
             $firstRun = $row['config_value'];
         } catch( PDOException $e ) {
             trigger_error( $e->getMessage() );
         }
         //  Nếu là lần đầu thì sẽ thực hiện chèn các đoạn code cần thiết và các file chỉ để Nukeviet 4 hỗ trợ Cache. 
-        if ($firstRun == 1) {
+        if ($firstRun == 0) {
             if(!checkRequirement($global_config['version'], $message)) {
                 $xtpl->assign( 'MESSAGE',"<div class=\"notice notice-error is-dismissible\"> <p>" . $message . "</p> </div>", $result );
                 break 2;
@@ -92,7 +90,7 @@ switch ($action) {
             removeCookieHandle($message);
             if(addCookieHandle($message)) {
                 try {
-                    $query = "UPDATE " . NV_PREFIXLANG . "_" . $module_data . "_config SET config_value='1' WHERE config_name='fix_cookie'";
+                    $query = "UPDATE " . $db_config['prefix'] . "_" . $module_data . "_config SET config_value='1' WHERE config_name='fix_cookie'";
                     $row = $db->prepare($query); 
                     $row->execute();
                 } catch( PDOException $e ) {
@@ -107,7 +105,7 @@ switch ($action) {
             removePurgeCacheHandle($message);
             if(addPurgeCacheHandle($message)) {
                 try {
-                    $query = "UPDATE " . NV_PREFIXLANG . "_" . $module_data . "_config SET config_value='1' WHERE config_name='fix_purge_cache'";
+                    $query = "UPDATE " . $db_config['prefix'] . "_" . $module_data . "_config SET config_value='1' WHERE config_name='fix_purge_cache'";
                     $row = $db->prepare($query); 
                     $row->execute();
                 } catch( PDOException $e ) {
@@ -118,10 +116,12 @@ switch ($action) {
                 $xtpl->assign( 'MESSAGE',"<div class=\"notice notice-error is-dismissible\"> <p>" . $message . "</p> </div>", $result );
                 break 2;
             }
+            // Khởi tạo cookie đầu tiên bởi admin đã login từ trước.
+            $nv_Request->set_Cookie('adlogin', '1');
 
             // Cập nhật first_run = 1 để lần sau không thực hiện công việc trên
             try {
-                    $query = "UPDATE " . NV_PREFIXLANG . "_" . $module_data . "_config SET config_value='0' WHERE config_name='first_run'";
+                    $query = "UPDATE " . $db_config['prefix'] . "_" . $module_data . "_config SET config_value='1' WHERE config_name='first_run'";
                     $row = $db->prepare($query); 
                     $row->execute();
                 } catch( PDOException $e ) {
@@ -134,7 +134,7 @@ switch ($action) {
         if(enableCacheRewrite($publicCacheTTL, $frontPageCacheTTL, $cacheLoginPage, $cacheFavicon ,$message)) {
             $result = "success"; 
            try {
-                $query = "UPDATE " . NV_PREFIXLANG . "_" . $module_data . "_config SET config_value='1' WHERE config_name='cache_status'";
+                $query = "UPDATE " . $db_config['prefix'] . "_" . $module_data . "_config SET config_value='1' WHERE config_name='cache_status'";
                 $row = $db->prepare($query); 
                 $row->execute();
              } catch( PDOException $e ) {
@@ -151,7 +151,7 @@ switch ($action) {
         if(disableCacheRewrite($message)) {
             $result = "success";
             try {
-                $query = "UPDATE " . NV_PREFIXLANG . "_" . $module_data . "_config SET config_value='0' WHERE config_name='cache_status'";
+                $query = "UPDATE " . $db_config['prefix'] . "_" . $module_data . "_config SET config_value='0' WHERE config_name='cache_status'";
                 $row = $db->prepare($query); 
                 $row->execute();
              } catch( PDOException $e ) {
@@ -178,7 +178,7 @@ switch ($action) {
         if(addCookieHandle($message)) {
             $result = "success";
             try {
-                $query = "UPDATE " . NV_PREFIXLANG . "_" . $module_data . "_config SET config_value='1' WHERE config_name='fix_cookie'";
+                $query = "UPDATE " . $db_config['prefix'] . "_" . $module_data . "_config SET config_value='1' WHERE config_name='fix_cookie'";
                 $row = $db->prepare($query); 
                 $row->execute();
              } catch( PDOException $e ) {
@@ -211,19 +211,19 @@ switch ($action) {
 
 // Lấy trạng thái cache hiện tại (đang bật hay tắt)
 try {
-    $query = "SELECT config_value FROM " . NV_PREFIXLANG . "_" . $module_data . "_config WHERE config_name='cache_status'";
+    $query = "SELECT config_value FROM " . $db_config['prefix'] . "_" . $module_data . "_config WHERE config_name='cache_status'";
     $row = $db->query($query)->fetch();
-    $status = $row['config_value'];
+    $cacheStatus = $row['config_value'];
 } catch( PDOException $e ) {
     trigger_error( $e->getMessage() );
 }
 
 // Đưa vào view button và trạng thái cache cho phù hợp
-if ($status == '0') {
+if ($cacheStatus == '0') {
      $xtpl->assign( 'CACHE_STATUS',"<h3><em class='fa fa-lg fa-exclamation-triangle text-danger' >&nbsp;</em> ". $lang_module['123host_status_disable'] ." </h3>");
      $xtpl->assign( 'CACHE_BUTTON',"<a href='" . NV_BASE_ADMINURL . 'index.php?' . NV_LANG_VARIABLE . '=' . NV_LANG_DATA . '&amp;' . NV_NAME_VARIABLE . '=' . $module_name . '&amp;' . NV_OP_VARIABLE . '=main' . '&amp;' . 'action=enableCache' . "' class='litespeed-btn litespeed-btn-primary'> " . $lang_module['123host_enable_cache'] . " </a>");
 } else {
-    $xtpl->assign( 'CACHE_STATUS',"<h3><em class='fa fa-lg fa-check text-success' >&nbsp;</em>" . $lang_module['123host_status_disable']. "</h3>");
+    $xtpl->assign( 'CACHE_STATUS',"<h3><em class='fa fa-lg fa-check text-success' >&nbsp;</em>" . $lang_module['123host_status_enabled']. "</h3>");
     $xtpl->assign( 'CACHE_BUTTON',"<a href='" . NV_BASE_ADMINURL . 'index.php?' . NV_LANG_VARIABLE . '=' . NV_LANG_DATA . '&amp;' . NV_NAME_VARIABLE . '=' . $module_name . '&amp;' . NV_OP_VARIABLE . '=main' . '&amp;' . 'action=disableCache' . "' class='litespeed-btn litespeed-btn-warning'> ". $lang_module['123host_disable_cache'] ." </a>");
 }
 

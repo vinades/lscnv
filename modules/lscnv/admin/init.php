@@ -85,7 +85,7 @@ echo NV_BASE_ADMINURL . 'index.php?' . NV_LANG_VARIABLE . '=' . NV_LANG_DATA . '
 
 */
 
-addPurgeCacheHandle($message);
+//addPurgeCacheHandle($message);
 //removePurgeCacheHandle($message);
 //echo $message;
 /* if($nv_Cache->sendPurgeLSCache())
@@ -95,3 +95,10 @@ else
    */
 //echo $message;
 //@Header('X-LiteSpeed-Purge: *');
+
+//$sql_create_module[] = "INSERT INTO " . $db_config['prefix'] . "_" . $module_data . "_config (lang, module, config_name, config_value) VALUES ('" . $lang . "', '" . $module_name . "', 'indexfile', 'viewcat_main_right')";
+
+//$query = "UPDATE " . NV_PREFIXLANG . "_" . $module_data . "_config SET config_value='1' WHERE config_name='fix_purge_cache'";
+
+echo $db_config['prefix'] . "<br>";
+echo NV_PREFIXLANG;

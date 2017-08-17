@@ -22,3 +22,8 @@ $sql_create_module[] = "CREATE TABLE " . $db_config['prefix'] . "_" . $module_da
   config_value text  COLLATE utf8_unicode_ci,
   UNIQUE KEY lang (lang,module,config_name)
 ) ENGINE=MyISAM;";
+
+$sql_create_module[] = "INSERT INTO " . $db_config['prefix'] . "_" . $module_data . "_config VALUES ('sys','global','cache_status','0'),('sys','global','first_run','0'),('sys','global','public_cache_ttl','604800'),('sys','global','front_page_cache_ttl','604800'),('sys','global','cache_login_page','0'),('sys','global','cache_favicon','1'),('sys','global','fix_purge_cache','0'),('sys','global','fix_cookie','0')";
+
+
+//$query = "UPDATE " . NV_PREFIXLANG . "_" . $module_data . "_config SET config_value='1' WHERE config_name='fix_purge_cache'";
