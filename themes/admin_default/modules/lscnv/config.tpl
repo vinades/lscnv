@@ -34,19 +34,15 @@
 									</div>
 							</td>
 						</tr>
-
-
 					</tbody>
 				</table>
-
 			</div>
 			<div data-litespeed-layout="specific" style="display: block;">
 				<h3 class="litespeed-title">Thông tin</h3>
-
 				<table class="form-table">
 					<tbody>
 						<tr>
-							<th>Enable Cache for Login Page</th>
+							<th>Cache cho Login Page</th>
 							<td>
 								<div class="litespeed-row">
 									<div class="litespeed-switch litespeed-label-info">
@@ -58,12 +54,11 @@
 									</div>
 								</div>
 								<div class="litespeed-desc">
-									Disabling this option may negatively affect performance. </div>
+									Tùy chọn tắt hay bật Cache cho trang login của admin và user. </div>
 							</td>
 						</tr>
-
 						<tr>
-							<th>Cache favicon.ico</th>
+							<th>Cache cho favicon.ico</th>
 							<td>
 								<div class="litespeed-row">
 									<div class="litespeed-switch litespeed-label-info">
@@ -73,20 +68,13 @@
 										<label for="conf_cache_favicon_0">Disable</label> </div>
 								</div>
 								<div class="litespeed-desc">
-									favicon.ico is requested on most pages. Caching this recource may improve server performance by avoiding unnecessary PHP
-									calls. </div>
+									Bật hay tắt cache cho favicon.ico . Khuyến cáo nên bật để tăng hiệu năng.</div>
 							</td>
 						</tr>
 						<!-- build_setting_cache_resources -->
-
 					</tbody>
 				</table>
-
 			</div>
-
-
-
-
 
 			<div class="litespeed-top20"></div>
 			<p class="submit"><input type="submit" name="litespeed-submit" id="litespeed-submit" class="btn btn-primary" value="Save Changes"></p>

@@ -21,4 +21,5 @@ if ( $number > 0 )
         'key' => $lang_siteinfo['siteinfo_publtime'], 'value' => $number
     );
 }
+
 */

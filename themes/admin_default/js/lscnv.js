@@ -6,7 +6,7 @@
  * @Createdate Fri, 11 Aug 2017 09:48:43 GMT
  */
 
- var _litespeed_meta ;
+var _litespeed_meta ;
 var _litespeed_shell_interval = 3 ;// seconds
 var _litespeed_shell_interval_range = [3, 60] ;
 var _litespeed_shell_handle ;

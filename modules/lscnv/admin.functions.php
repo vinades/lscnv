@@ -1,30 +1,32 @@
 <?php
 
 /**
- * @Project 123HOST LSCache
- * @Author 123host <tanviet@123host.vn>
- * @Copyright (C) 2017 123host. All rights reserved
+ * @Project 123HOST LSCache module for Nukeviet 4
+ * @Author Tan Viet <tanviet@123host.vn>
+ * @Copyright (C) 2017 123HOST. All rights reserved
  * @License: GNU/GPL version 2 or any later version
  * @Createdate Fri, 11 Aug 2017 09:48:43 GMT
  */
 
-if ( ! defined( 'NV_ADMIN' ) or ! defined( 'NV_MAINFILE' ) or ! defined( 'NV_IS_MODADMIN' ) ) die( 'Stop!!!' );
+if ( ! defined( 'NV_ADMIN' ) or ! defined( 'NV_mMAINFILE' ) or ! defined( 'NV_IS_MODADMIN' ) ) die( 'Stop!!!' );
 
 define( 'NV_IS_FILE_ADMIN', true );
 
 
 $allow_func = array( 'main', 'config', 'info', 'init' );
 
-
+/*
+    Function kiểm tra tính tương thích của hệ thống:
+        - Kiểm tra phiên bản Nukeviet: Phải là Nukeviet 4.0 trở lên
+        - Các file cần thiết phải tồn tại và ghi được
+*/
 function checkRequirement($nvCurrentVersion,&$message) {
-
     // Nukeviet versions are supported
     $arrayVersion = explode('.', $nvCurrentVersion);
     if ($arrayVersion[0] < 4) {
         $message = 'Module này chỉ hỗ trợ phiên bản Nukeviet 4.0 trở lên. Vui lòng liên hệ support@123host.vn để được hỗ trợ!';
         return FALSE;
     }
-
     // Files must exist and writeable
     $filesNeedToWrite = array (
         NV_ROOTDIR . '/.htaccess',
@@ -50,8 +52,27 @@ function checkRequirement($nvCurrentVersion,&$message) {
     }
 }
 
-function enableCacheRewrite(&$message) {
+/*
+    Build rewrite rule và Bật rewrite cache tại file .htaccess
+*/
+function enableCacheRewrite($publicCacheTTL, $frontPageCacheTTL, $cacheLoginPage, $cacheFavicon ,&$message) {
+
     $htaccessFile = NV_ROOTDIR . '/.htaccess';
+
+    if ($cacheLoginPage == 1) {
+        $cacheLoginPageBlock = "";
+    } else {
+        $cacheLoginPageBlock = "\n  ### 123HOST LSCache - LOGIN LOCATION\n  RewriteCond %{ORG_REQ_URI} !/admin|/users [NC]\n  ### 123HOST LSCache - LOGIN LOCATION
+    ";
+    }
+
+    if ($cacheFavicon == 1) {
+        $cacheFaviconBlock = "";
+    } else {
+        $cacheFaviconBlock = "### 123HOST LSCache - FAVICON\n  RewriteCond %{REQUEST_URI} !/favicon\.ico$ [NC]\n  ### 123HOST LSCache - FAVICON
+    ";
+    }
+
 
     // Create rewrite content for handle caching
     $rewriteContent = "########## Begin 123HOST LSCache
@@ -68,17 +89,14 @@ function enableCacheRewrite(&$message) {
   RewriteCond %{HTTP_USER_AGENT} \"android|avantgo|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge\ |maemo|midp|mmp|opera\ m(ob|in)i|palm(\ os)?|phone|p(ixi|re)\/|plucker|pocket|psp|symbian|treo|up\.(browser|link)|vodafone|wap|windows\ (ce|phone)|xda|xiino\" [NC]
   RewriteRule .* - [E=Cache-Control:vary=ismobile]
   ### 123HOST LSCache - MOBILE
-
-  ### 123HOST LSCache - LOGIN LOCATION
-  RewriteCond %{ORG_REQ_URI} !/admin|/users [NC]
-  ### 123HOST LSCache - LOGIN LOCATION
-
+  " . $cacheLoginPageBlock . "
+  " . $cacheFaviconBlock . "
   ### 123HOST LSCache - LOGIN COOKIE
   RewriteCond %{HTTP_COOKIE} !nvloginhash|adlogin [NC]
   ### 123HOST LSCache - LOGIN COOKIE
 
   ### 123HOST LSCache - MAX AGE
-  RewriteRule .* - [E=Cache-Control:max-age=1800] [NC]
+  RewriteRule .* - [E=Cache-Control:max-age=" . $publicCacheTTL . "] [NC]
   ### 123HOST LSCache - MAX AGE
 
 </IfModule>
@@ -99,6 +117,10 @@ function enableCacheRewrite(&$message) {
 
 }
 
+/*
+    Tắt rewrite cache tại .htaccess
+        Xóa tất cả các rewrite rule cache
+*/
 function disableCacheRewrite(&$message) {
     $htaccessFile = NV_ROOTDIR . '/.htaccess';
 
@@ -138,7 +160,9 @@ function disableCacheRewrite(&$message) {
 }
 
 
-
+/*
+    Fix các file admin_login.php và admin_logout.php để hỗ trợ cache cho Nukeviet
+*/
 function addCookieHandle(&$message) {
 
     $adminLogin = NV_ROOTDIR . '/includes/core/admin_login.php';
@@ -189,6 +213,10 @@ function addCookieHandle(&$message) {
     
 }
 
+/*
+    Xóa các file đã thêm vào admin_login.php và admin_logout.php
+    Run lúc uninstall module để gỡ bỏ module
+*/
 function removeCookieHandle(&$message) {
 
     /* Remove Cookie Handle in admin LOGIN file */
@@ -263,6 +291,104 @@ function removeCookieHandle(&$message) {
     
 }
 
+/*
+    Fix file vendor/vinades/nukeviet/Cache/Files.php để hỗ trợ call đến purge cache lúc có sự thay đổi trên hệ thống (như đăng bài, sửa bài, sửa module)
+*/
+function addPurgeCacheHandle(&$message) {
+    
+    $cacheFile = NV_ROOTDIR . '/vendor/vinades/nukeviet/Cache/Files.php';
+
+    $patternForAddFunction = "/}/";
+    $patternForCallFunction = "/delAll|delMod/";
+    
+    $contentFunction = array("//123HOST LSCache begin mofidy\npublic function sendPurgeLSCache() {\n        @Header('X-LiteSpeed-Purge: *');
+}\n//123HOST LSCache end mofidy\n");
+    $contentCallFunction = "//123HOST LSCache begin mofidy\n        \$this->sendPurgeLSCache();\n//123HOST LSCache end mofidy\n";
+    
+    // Thêm function sendPurgeLSCache vào cuối file Files.php
+    $contentByLine = file($cacheFile);
+
+    foreach ( $contentByLine as $lineNum => $lineContent ) {
+        if (preg_match($patternForAddFunction, $lineContent) ) {
+            $insertLineNum = $lineNum;
+        }
+    }
+        
+    array_splice( $contentByLine, $insertLineNum, 0, $contentFunction ); 
+        
+    if(!file_put_contents($cacheFile, implode("", $contentByLine), LOCK_EX)){
+        $message = "Kích hoạt cache thất bại. Không thể hiệu chỉnh file " . $cacheFile;
+        return FALSE;
+    }
+      
+    /* Insert code to remove cookie after admin logout */
+    $contentByLine = file($cacheFile);
+    
+    $i = 0;
+    foreach ( $contentByLine as $lineNum => $lineContent ) {
+        if ( preg_match($patternForCallFunction, $lineContent) ) {
+            $insertLineNum = $lineNum + 2;
+            array_splice( $contentByLine, $insertLineNum + $i, 0, $contentCallFunction );
+            $i++;
+        }
+    }
+
+    if(file_put_contents($cacheFile, implode("", $contentByLine), LOCK_EX)) {
+        $message = "Hiệu chỉnh file " . $cacheFile . " thành công!";
+        return TRUE;
+    } else {
+        $message = "Lỗi: Không thể hiệu chỉnh file " . $cacheFile;
+        return FALSE;
+    }
+        
+}
+
+function removePurgeCacheHandle(&$message) {
+    
+    $cacheFile = NV_ROOTDIR . '/vendor/vinades/nukeviet/Cache/Files.php';        
+    
+    $beginModifyPattern = "/123HOST LSCache begin mofidy/";
+    $endModifyPattern = "/123HOST LSCache end mofidy/";
+
+    $contentByLine = file($cacheFile);
+    
+
+    $matches  = preg_grep ($beginModifyPattern, $contentByLine);
+    $numberOfBlock = count($matches);
+    
+    for ($i=0; $i < $numberOfBlock; $i++) {
+        
+        // Find Begin and End 123HOST modify
+        $contentByLine = file($cacheFile);
+        foreach ( $contentByLine as $lineNum => $lineContent ) {
+            if (preg_match($beginModifyPattern, $lineContent))
+                $beginLineNum = $lineNum;
+
+            if (preg_match($endModifyPattern, $lineContent))
+                $endLineNum = $lineNum;
+        }
+
+        // Detroy lines
+        if (isset($beginLineNum) && isset($endLineNum)) {
+            foreach ( $contentByLine as $lineNum => $lineContent ) {
+                if ( $lineNum >= $beginLineNum && $lineNum <= $endLineNum ) {
+                    $contentByLine[$lineNum] = "";
+                }
+            } 
+            if(!file_put_contents($cacheFile, implode("", $contentByLine), LOCK_EX)){
+                $message = "Lỗi: Không thể hiệu chỉnh file " . $cacheFile;
+                return FALSE;
+            }
+        }
+    }
+    $message = "Hiệu chỉnh file " . $cacheFile . " thành công!";
+    return TRUE;
+}
+
+/*
+   Build header và Gởi thông tin xóa cache đến web server
+   Lưu ý: Chỉ hỗ trợ web server của 123HOST
+*/
 function sendPurge($url, $debug = FALSE, &$message) {
         
     $fp = fsockopen(NV_SERVER_NAME, 80, $errno, $errstr, 2);

@@ -24,7 +24,6 @@ function nv_theme_lscnv_main ( $array_data )
     $xtpl->assign( 'LANG', $lang_module );
 
     
-
     $xtpl->parse( 'main' );
     return $xtpl->text( 'main' );
 }

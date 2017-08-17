@@ -10,4 +10,5 @@
 
 if ( ! defined( 'NV_IS_MOD_LSCNV' ) ) die( 'Stop!!!' );
 
+
 die();

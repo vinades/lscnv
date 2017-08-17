@@ -1,9 +1,9 @@
 <?php
 
 /**
- * @Project 123HOST LSCache for Nukeviet 4
- * @Author 123host <tanviet@123host.vn>
- * @Copyright (C) 2017 123host. All rights reserved
+ * @Project 123HOST LSCache module for Nukeviet 4
+ * @Author Tan Viet <tanviet@123host.vn>
+ * @Copyright (C) 2017 123HOST. All rights reserved
  * @License: GNU/GPL version 2 or any later version
  * @Createdate Fri, 11 Aug 2017 09:48:43 GMT
  */
@@ -19,6 +19,22 @@ $xtpl->assign( 'NV_NAME_VARIABLE', NV_NAME_VARIABLE );
 $xtpl->assign( 'NV_OP_VARIABLE', NV_OP_VARIABLE );
 $xtpl->assign( 'MODULE_NAME', $module_name );
 $xtpl->assign( 'OP', $op );
+
+/* 
+    Lấy các giá trị cấu hình cache tại table _config của module 
+        $publicCacheTTL : Thời gian cache chung (giây)
+        $frontPageCacheTTL : Giờ gian cache trang chủ (giây)
+        $cacheLoginPage : Có cache login page hay không
+        $cacheFavicon : Có cache Favicon hay không
+*/
+
+try {
+    $query = "SELECT config_value FROM " . NV_PREFIXLANG . "_" . $module_data . "_config WHERE config_name='cache_status'";
+    $row = $db->query($query)->fetch();
+    $cacheStatus = $row['config_value'];
+} catch( PDOException $e ) {
+    trigger_error( $e->getMessage() );
+}
 
 try {
     $query = "SELECT config_value FROM " . NV_PREFIXLANG . "_" . $module_data . "_config WHERE config_name='public_cache_ttl'";
@@ -44,9 +60,6 @@ try {
     trigger_error( $e->getMessage() );
 }
 
-
-
-
 try {
     $query = "SELECT config_value FROM " . NV_PREFIXLANG . "_" . $module_data . "_config WHERE config_name='cache_favicon'";
     $row = $db->query($query)->fetch();
@@ -55,7 +68,9 @@ try {
     trigger_error( $e->getMessage() );
 }
 
-
+/*
+    Lấy các giá trị submit từ form. Nếu không có giá trị sẽ = 0
+*/
 
 $newPublicCacheTTL = $nv_Request->get_int('public_cache_ttl', 'post');
 $newFrontPageCacheTTL = $nv_Request->get_int('front_page_cache_ttl', 'post');
@@ -63,7 +78,10 @@ $newFrontPageCacheTTL = $nv_Request->get_int('front_page_cache_ttl', 'post');
 $newCacheLoginPage = $nv_Request->get_int('cache_login_page', 'post');
 $newCacheFavicon = $nv_Request->get_int('cache_favicon', 'post');
 
+/* Nếu có submit form */
 if ($newPublicCacheTTL != 0) {
+
+    /* Insert dữ liệu mới từ form vào CSDL */
     try {
         $query = "UPDATE " . NV_PREFIXLANG . "_" . $module_data . "_config SET config_value='" . $newPublicCacheTTL ."' WHERE config_name='public_cache_ttl'";
         $row = $db->prepare($query); 
@@ -83,7 +101,15 @@ if ($newPublicCacheTTL != 0) {
     } catch( PDOException $e ) {
         trigger_error( $e->getMessage() );
     }
-    $xtpl->assign( 'MESSAGE', "<div class=\"notice notice-success is-dismissible\"> <p> Cập nhật thành công</p> </div>" );
+
+    /* Build lại file .htaccess với cấu hình mới nếu Cache đang bật */
+    if ($cacheStatus == 1) {
+        disableCacheRewrite($message);
+        enableCacheRewrite($newPublicCacheTTL, $newFrontPageCacheTTL, $newCacheLoginPage, $newCacheFavicon ,$message);
+    }
+    
+    /* Gán các giá trị mới cho vào view */
+    $xtpl->assign( 'MESSAGE', "<div class=\"notice notice-success is-dismissible\"> <p> " . $lang_module['123host_settings_saved'] . "</p> </div>" );
     $xtpl->assign( 'PUBLIC_CACHE_TTL', $newPublicCacheTTL );
     $xtpl->assign( 'FRONT_PAGE_CACHE_TTL', $newFrontPageCacheTTL );
 
@@ -98,7 +124,10 @@ if ($newPublicCacheTTL != 0) {
     } else {
        $xtpl->assign( 'ENABLE_CACHE_FAVICON_CHECKED',"checked");
     }
-
+    
+/*
+    Nếu không có submit form. Giá trị cần đưa ra view là giá trị cũ từ CSDL
+*/
 } else {
     $xtpl->assign( 'PUBLIC_CACHE_TTL', $publicCacheTTL );
     $xtpl->assign( 'FRONT_PAGE_CACHE_TTL', $frontPageCacheTTL );
@@ -115,9 +144,6 @@ if ($newPublicCacheTTL != 0) {
        $xtpl->assign( 'ENABLE_CACHE_FAVICON_CHECKED',"checked");
     }
 }
-
-
-
 
 $xtpl->parse( 'config' );
 $contents = $xtpl->text( 'config' );

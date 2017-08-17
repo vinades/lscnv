@@ -1,9 +1,9 @@
 <?php
 
 /**
- * @Project NUKEVIET 4.x
- * @Author 123host <tanviet@123host.vn>
- * @Copyright (C) 2017 123host. All rights reserved
+ * @Project 123HOST LSCache module for Nukeviet 4
+ * @Author Tan Viet <tanviet@123host.vn>
+ * @Copyright (C) 2017 123HOST. All rights reserved
  * @License: GNU/GPL version 2 or any later version
  * @Createdate Fri, 11 Aug 2017 09:48:43 GMT
  */
@@ -20,12 +20,61 @@ $xtpl->assign( 'NV_OP_VARIABLE', NV_OP_VARIABLE );
 $xtpl->assign( 'MODULE_NAME', $module_name );
 $xtpl->assign( 'OP', $op );
 
+
+/* 
+    Lấy các giá trị cấu hình cache tại table _config của module 
+        $publicCacheTTL : Thời gian cache chung (giây)
+        $frontPageCacheTTL : Giờ gian cache trang chủ (giây)
+        $cacheLoginPage : Có cache login page hay không
+        $cacheFavicon : Có cache Favicon hay không
+*/
+try {
+    $query = "SELECT config_value FROM " . NV_PREFIXLANG . "_" . $module_data . "_config WHERE config_name='public_cache_ttl'";
+    $row = $db->query($query)->fetch();
+    $publicCacheTTL = $row['config_value'];
+} catch( PDOException $e ) {
+    trigger_error( $e->getMessage() );
+}
+
+try {
+    $query = "SELECT config_value FROM " . NV_PREFIXLANG . "_" . $module_data . "_config WHERE config_name='front_page_cache_ttl'";
+    $row = $db->query($query)->fetch();
+    $frontPageCacheTTL = $row['config_value'];
+} catch( PDOException $e ) {
+    trigger_error( $e->getMessage() );
+}
+
+try {
+    $query = "SELECT config_value FROM " . NV_PREFIXLANG . "_" . $module_data . "_config WHERE config_name='cache_login_page'";
+    $row = $db->query($query)->fetch();
+    $cacheLoginPage = $row['config_value'];
+} catch( PDOException $e ) {
+    trigger_error( $e->getMessage() );
+}
+
+try {
+    $query = "SELECT config_value FROM " . NV_PREFIXLANG . "_" . $module_data . "_config WHERE config_name='cache_favicon'";
+    $row = $db->query($query)->fetch();
+    $cacheFavicon = $row['config_value'];
+} catch( PDOException $e ) {
+    trigger_error( $e->getMessage() );
+}
+
+/*
+    Lấy biến $action từ URL
+*/
 $action = $nv_Request->get_title('action', 'get');
 
-
+/*
+    Kiểm tra giá trị của action và thực hiện các hành động tương ứng
+*/
 switch ($action) {
+    // $action = enableCache : Thực hiện bật Cache cho Nukeviet
     case "enableCache":
+        // Có phải lần đầu tiên thực hiện bật không?
         $firstRun = 0;
+
+        // Lấy giá trị first_run trong CSDL để biết có phải lần đầu tiên bật Cache không.
         try {
             $query = "SELECT config_value FROM " . NV_PREFIXLANG . "_" . $module_data . "_config WHERE config_name='first_run'";
             $row = $db->query($query)->fetch();
@@ -33,16 +82,17 @@ switch ($action) {
         } catch( PDOException $e ) {
             trigger_error( $e->getMessage() );
         }
-        //$firstRun = 1;
+        //  Nếu là lần đầu thì sẽ thực hiện chèn các đoạn code cần thiết và các file chỉ để Nukeviet 4 hỗ trợ Cache. 
         if ($firstRun == 1) {
             if(!checkRequirement($global_config['version'], $message)) {
                 $xtpl->assign( 'MESSAGE',"<div class=\"notice notice-error is-dismissible\"> <p>" . $message . "</p> </div>", $result );
-                break;
+                break 2;
             }
+            // Thực hiện thêm các đoạn code xử lý cookie vào Nukeviet
             removeCookieHandle($message);
             if(addCookieHandle($message)) {
                 try {
-                    $query = "UPDATE " . NV_PREFIXLANG . "_" . $module_data . "_config SET config_value='1' WHERE config_name='init_cache'";
+                    $query = "UPDATE " . NV_PREFIXLANG . "_" . $module_data . "_config SET config_value='1' WHERE config_name='fix_cookie'";
                     $row = $db->prepare($query); 
                     $row->execute();
                 } catch( PDOException $e ) {
@@ -51,8 +101,25 @@ switch ($action) {
             }
             else {
                 $xtpl->assign( 'MESSAGE',"<div class=\"notice notice-error is-dismissible\"> <p>" . $message . "</p> </div>", $result );
-                break;
+                break 2;
             }
+            // Thực hiện thêm các đoạn code xử lý purge cache phía Web server vào Nukeviet
+            removePurgeCacheHandle($message);
+            if(addPurgeCacheHandle($message)) {
+                try {
+                    $query = "UPDATE " . NV_PREFIXLANG . "_" . $module_data . "_config SET config_value='1' WHERE config_name='fix_purge_cache'";
+                    $row = $db->prepare($query); 
+                    $row->execute();
+                } catch( PDOException $e ) {
+                    trigger_error( $e->getMessage() );
+                }
+            }
+            else {
+                $xtpl->assign( 'MESSAGE',"<div class=\"notice notice-error is-dismissible\"> <p>" . $message . "</p> </div>", $result );
+                break 2;
+            }
+
+            // Cập nhật first_run = 1 để lần sau không thực hiện công việc trên
             try {
                     $query = "UPDATE " . NV_PREFIXLANG . "_" . $module_data . "_config SET config_value='0' WHERE config_name='first_run'";
                     $row = $db->prepare($query); 
@@ -62,9 +129,9 @@ switch ($action) {
             }
             
         }
-        
+        // Để trách bị lặp rewrite, thực hiện tắt rewrite cache trước sau đó mới bật rewrite cache
         disableCacheRewrite($message);
-        if(enableCacheRewrite($message)) {
+        if(enableCacheRewrite($publicCacheTTL, $frontPageCacheTTL, $cacheLoginPage, $cacheFavicon ,$message)) {
             $result = "success"; 
            try {
                 $query = "UPDATE " . NV_PREFIXLANG . "_" . $module_data . "_config SET config_value='1' WHERE config_name='cache_status'";
@@ -79,7 +146,7 @@ switch ($action) {
 
         $xtpl->assign( 'MESSAGE',"<div class=\"notice notice-" . $result . " is-dismissible\"> <p>" . $message . "</p> </div>", $result );
         break;
-
+    // Tắt Cache.
     case "disableCache":
         if(disableCacheRewrite($message)) {
             $result = "success";
@@ -96,7 +163,7 @@ switch ($action) {
             $result = "error";
         $xtpl->assign( 'MESSAGE',"<div class=\"notice notice-" . $result . " is-dismissible\"> <p>" . $message . "</p> </div>", $result );
         break;
-
+     // Kiểm tra tương thích hệ thống
      case "checkRequirement":
         if(checkRequirement($global_config['version'],$message))
             $result = "success";
@@ -105,13 +172,13 @@ switch ($action) {
         $xtpl->assign( 'MESSAGE',"<div class=\"notice notice-" . $result . " is-dismissible\"> <p>" . $message . "</p> </div>", $result );
         break;
  
-
+    // Chỉ dành cho debug. 
     case "initCache":
         removeCookieHandle($message);
         if(addCookieHandle($message)) {
             $result = "success";
             try {
-                $query = "UPDATE " . NV_PREFIXLANG . "_" . $module_data . "_config SET config_value='1' WHERE config_name='init_cache'";
+                $query = "UPDATE " . NV_PREFIXLANG . "_" . $module_data . "_config SET config_value='1' WHERE config_name='fix_cookie'";
                 $row = $db->prepare($query); 
                 $row->execute();
              } catch( PDOException $e ) {
@@ -122,30 +189,27 @@ switch ($action) {
             $result = "error";
         $xtpl->assign( 'MESSAGE',"<div class=\"notice notice-" . $result . " is-dismissible\"> <p>" . $message . "</p> </div>", $result );
         break;
-
+    // Xóa cache trang chủ. Xóa URL = / và URL = /lang (ví dụ /vi/)
     case "purgeFront":
         $url = NV_BASE_SITEURL;
         $urlWithLang = NV_BASE_SITEURL . NV_LANG_DATA . "/";
         if (sendPurge($url, FALSE, $message ) && sendPurge($urlWithLang, FALSE, $message )) {
             $result = "success";
-            $xtpl->assign( 'MESSAGE',"<div class=\"notice notice-" . $result . " is-dismissible\"> <p> Xóa cache trang chủ thành công</p> </div>", $result );
+            $xtpl->assign( 'MESSAGE',"<div class=\"notice notice-" . $result . " is-dismissible\"> <p> " . $lang_module['123host_purge_front_success'] . " </p> </div>", $result );
         } else {
             $result = "error";
-            $xtpl->assign( 'MESSAGE',"<div class=\"notice notice-" . $result . " is-dismissible\"> <p> Xóa cache trang chủ thất bại.</p> </div>", $result );
+            $xtpl->assign( 'MESSAGE',"<div class=\"notice notice-" . $result . " is-dismissible\"> <p> " . $lang_module['123host_purge_front_failure'] . "</p> </div>", $result );
         }
         break;
+    // Xóa tất cả cache
     case "purgeAll":
-        $url = "*";
-        if ( sendPurge($url, FALSE, $message ) ) {
-            $result = "success";
-            $xtpl->assign( 'MESSAGE',"<div class=\"notice notice-" . $result . " is-dismissible\"> <p> Xóa cache thành công</p> </div>", $result );
-        } else {
-            $result = "error";
-            $xtpl->assign( 'MESSAGE',"<div class=\"notice notice-" . $result . " is-dismissible\"> <p> Xóa cache thất bại.</p> </div>", $result );
-        }
+        $nv_Cache->sendPurgeLSCache();
+        $xtpl->assign( 'MESSAGE',"<div class=\"notice notice-success is-dismissible\"> <p>" . $lang_module['123host_purge_success'] . "</p> </div>");
         break;
+    
 }
 
+// Lấy trạng thái cache hiện tại (đang bật hay tắt)
 try {
     $query = "SELECT config_value FROM " . NV_PREFIXLANG . "_" . $module_data . "_config WHERE config_name='cache_status'";
     $row = $db->query($query)->fetch();
@@ -154,16 +218,16 @@ try {
     trigger_error( $e->getMessage() );
 }
 
+// Đưa vào view button và trạng thái cache cho phù hợp
 if ($status == '0') {
-     $xtpl->assign( 'CACHE_STATUS',"<h3><em class='fa fa-lg fa-exclamation-triangle text-danger' >&nbsp;</em>ĐANG TẮT</h3>");
-     $xtpl->assign( 'CACHE_BUTTON',"<a href='" . NV_BASE_ADMINURL . 'index.php?' . NV_LANG_VARIABLE . '=' . NV_LANG_DATA . '&amp;' . NV_NAME_VARIABLE . '=' . $module_name . '&amp;' . NV_OP_VARIABLE . '=main' . '&amp;' . 'action=enableCache' . "' class='litespeed-btn litespeed-btn-primary'> Bật Cache </a>");
+     $xtpl->assign( 'CACHE_STATUS',"<h3><em class='fa fa-lg fa-exclamation-triangle text-danger' >&nbsp;</em> ". $lang_module['123host_status_disable'] ." </h3>");
+     $xtpl->assign( 'CACHE_BUTTON',"<a href='" . NV_BASE_ADMINURL . 'index.php?' . NV_LANG_VARIABLE . '=' . NV_LANG_DATA . '&amp;' . NV_NAME_VARIABLE . '=' . $module_name . '&amp;' . NV_OP_VARIABLE . '=main' . '&amp;' . 'action=enableCache' . "' class='litespeed-btn litespeed-btn-primary'> " . $lang_module['123host_enable_cache'] . " </a>");
 } else {
-    $xtpl->assign( 'CACHE_STATUS',"<h3><em class='fa fa-lg fa-check text-success' >&nbsp;</em>ĐANG BẬT</h3>");
-    $xtpl->assign( 'CACHE_BUTTON',"<a href='" . NV_BASE_ADMINURL . 'index.php?' . NV_LANG_VARIABLE . '=' . NV_LANG_DATA . '&amp;' . NV_NAME_VARIABLE . '=' . $module_name . '&amp;' . NV_OP_VARIABLE . '=main' . '&amp;' . 'action=disableCache' . "' class='litespeed-btn litespeed-btn-warning'> Tắt Cache </a>");
+    $xtpl->assign( 'CACHE_STATUS',"<h3><em class='fa fa-lg fa-check text-success' >&nbsp;</em>" . $lang_module['123host_status_disable']. "</h3>");
+    $xtpl->assign( 'CACHE_BUTTON',"<a href='" . NV_BASE_ADMINURL . 'index.php?' . NV_LANG_VARIABLE . '=' . NV_LANG_DATA . '&amp;' . NV_NAME_VARIABLE . '=' . $module_name . '&amp;' . NV_OP_VARIABLE . '=main' . '&amp;' . 'action=disableCache' . "' class='litespeed-btn litespeed-btn-warning'> ". $lang_module['123host_disable_cache'] ." </a>");
 }
 
-
-
+// Đưa vào view button Xóa Cache Trang chủ và Xóa tất cả Cache. URL được tùy biến theo ngôn ngữ và đường dẫn riêng của Nukeviet.
 $xtpl->assign( 'PURGE_CACHE_FRONT_BUTTON',"<a href='" . NV_BASE_ADMINURL . 'index.php?' . NV_LANG_VARIABLE . '=' . NV_LANG_DATA . '&amp;' . NV_NAME_VARIABLE . '=' . $module_name . '&amp;' . NV_OP_VARIABLE . '=main' . '&amp;' . 'action=purgeFront' . "' class='litespeed-btn litespeed-btn-success'>". $lang_module['123HOST_MAIN_TL3'] . " </a>");
 $xtpl->assign( 'PURGE_CACHE_ALL_BUTTON',"<a href='" . NV_BASE_ADMINURL . 'index.php?' . NV_LANG_VARIABLE . '=' . NV_LANG_DATA . '&amp;' . NV_NAME_VARIABLE . '=' . $module_name . '&amp;' . NV_OP_VARIABLE . '=main' . '&amp;' . 'action=purgeAll' . "' class='litespeed-btn litespeed-btn-danger'>". $lang_module['123HOST_MAIN_TL6'] . " </a>");
 
