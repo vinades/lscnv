@@ -416,3 +416,6 @@ function sendPurge($url, $debug = FALSE, &$message) {
         return TRUE;
     }
 }
+function vietTest() {
+    return "you are running";
+}
