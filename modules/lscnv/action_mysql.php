@@ -1,11 +1,24 @@
 <?php
 
 /**
- * @Project 123HOST LSCache module for Nukeviet 4
- * @Author Tan Viet <tanviet@123host.vn>
- * @Copyright (C) 2017 123HOST. All rights reserved
- * @License: GNU/GPL version 2 or any later version
- * @Createdate Fri, 11 Aug 2017 09:48:43 GMT
+ * @Project:          123HOST LSCache module for Nukeviet 4.x
+ * Module Name:       123HOST LSCache
+ * Module URI:        https://123host.vn/nukeviet-hosting.html
+ * Description:       Nukeviet module to connect to Caching Web Server at 123HOST
+ * Version:           1.0.00
+ * Author:            Digital Storage Company Limited
+ * Author URI:        https://123host.vn/
+ * License:           GPLv3
+ * License URI:       http://www.gnu.org/licenses/gpl.html
+ * Text Domain:       lscnv
+ * @Createdate:       Fri, 11 Aug 2017 09:48:43 GMT
+ *
+ * @Copyright (C) 2017 Digital Storage Company Limited. All rights reserved
+ *
+ * This program is distributed by 123HOST in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  */
 
 if ( ! defined( 'NV_MAINFILE' ) ) die( 'Stop!!!' );
@@ -206,5 +219,4 @@ if ($op == 'del' || $op == 'recreate_mod') {
     $query = "INSERT INTO " . $db_config['prefix'] . "_" . $module_data . "_config VALUES ('sys','global','cache_status','0'),('sys','global','first_run','0'),('sys','global','public_cache_ttl','604800'),('sys','global','front_page_cache_ttl','604800'),('sys','global','cache_login_page','0'),('sys','global','cache_favicon','1'),('sys','global','fix_purge_cache','0'),('sys','global','fix_cookie','0')";
     $row = $db->prepare($query); 
     $row->execute();
-    die('Xóa module');
 }

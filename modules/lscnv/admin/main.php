@@ -1,11 +1,24 @@
 <?php
 
 /**
- * @Project 123HOST LSCache module for Nukeviet 4
- * @Author Tan Viet <tanviet@123host.vn>
- * @Copyright (C) 2017 123HOST. All rights reserved
- * @License: GNU/GPL version 2 or any later version
- * @Createdate Fri, 11 Aug 2017 09:48:43 GMT
+ * @Project:          123HOST LSCache module for Nukeviet 4.x
+ * Module Name:       123HOST LSCache
+ * Module URI:        https://123host.vn/nukeviet-hosting.html
+ * Description:       Nukeviet module to connect to Caching Web Server at 123HOST
+ * Version:           1.0.00
+ * Author:            Digital Storage Company Limited
+ * Author URI:        https://123host.vn/
+ * License:           GPLv3
+ * License URI:       http://www.gnu.org/licenses/gpl.html
+ * Text Domain:       lscnv
+ * @Createdate:       Fri, 11 Aug 2017 09:48:43 GMT
+ *
+ * @Copyright (C) 2017 Digital Storage Company Limited. All rights reserved
+ *
+ * This program is distributed by 123HOST in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  */
 
 if ( ! defined( 'NV_IS_FILE_ADMIN' ) ) die( 'Stop!!!' );
@@ -84,7 +97,7 @@ switch ($action) {
         if ($firstRun == 0) {
             if(!checkRequirement($global_config['version'], $message)) {
                 $xtpl->assign( 'MESSAGE',"<div class=\"notice notice-error is-dismissible\"> <p>" . $message . "</p> </div>", $result );
-                break 2;
+                break 1;
             }
             // Thực hiện thêm các đoạn code xử lý cookie vào Nukeviet
             removeCookieHandle($message);
