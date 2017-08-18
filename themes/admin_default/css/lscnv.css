@@ -2363,3 +2363,9 @@ p {
 .notice {
     margin: 5px 0 15px;
 }
+
+.host123-img {
+  max-width: 100%;
+  height: auto;
+  margin: auto;
+}

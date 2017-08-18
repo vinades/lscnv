@@ -32,7 +32,8 @@ function checkRequirement($nvCurrentVersion,&$message) {
     $filesNeedToWrite = array (
         NV_ROOTDIR . '/.htaccess',
         NV_ROOTDIR . '/includes/core/admin_login.php',
-        NV_ROOTDIR . '/includes/core/admin_logout.php'
+        NV_ROOTDIR . '/includes/core/admin_logout.php',
+        NV_ROOTDIR . '/vendor/vinades/nukeviet/Cache/Files.php'
     );
     $htaccessFile = NV_ROOTDIR . '/.htaccess';
     $adminLogin = NV_ROOTDIR . '/includes/core/admin_login.php';
@@ -42,6 +43,13 @@ function checkRequirement($nvCurrentVersion,&$message) {
         if (!is_writable($file)) {
             $message = $message . "<br><i>" . 'File <strong>' . $file . '</strong>' . $lang_module['123host_file_not_exist_or_write'] . '</i>';
         }
+    }
+
+    $hostName = gethostname();
+    $pattern = "/(web|node)[0-9]+\.1213host\.vn/";
+
+    if (!preg_match($pattern, $hostName)) {
+        $message = $message . "<br><i>" . $lang_module['123host_not_at_123host'] . '</i>';
     }
 
     if ($message) {

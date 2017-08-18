@@ -100,5 +100,6 @@ else
 
 //$query = "UPDATE " . NV_PREFIXLANG . "_" . $module_data . "_config SET config_value='1' WHERE config_name='fix_purge_cache'";
 
-echo $db_config['prefix'] . "<br>";
-echo NV_PREFIXLANG;
+//echo NV_MODULES_TABLE;
+
+echo gethostname();

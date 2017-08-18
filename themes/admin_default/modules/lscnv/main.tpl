@@ -55,7 +55,11 @@
 				</tr>
 			</tbody>
 		</table>
+		<div> 
+		<a href="https://123host.vn/nukeviet-hosting.html" target="_blank"><img src="https://123host.vn/wp-content/uploads/2017/08/nukeviet-hosting-banner-with-button.png" class="host123-img"></a>
 	</div>
+	</div>
+	
 </div>
 
 <!-- END: main -->

@@ -25,6 +25,8 @@ $sql_create_module[] = "CREATE TABLE " . $db_config['prefix'] . "_" . $module_da
 
 $sql_create_module[] = "INSERT INTO " . $db_config['prefix'] . "_" . $module_data . "_config VALUES ('sys','global','cache_status','0'),('sys','global','first_run','0'),('sys','global','public_cache_ttl','604800'),('sys','global','front_page_cache_ttl','604800'),('sys','global','cache_login_page','0'),('sys','global','cache_favicon','1'),('sys','global','fix_purge_cache','0'),('sys','global','fix_cookie','0')";
 
+$sql_create_module[] = "UPDATE " . NV_MODULES_TABLE . " SET custom_title='123HOST LSCache' WHERE title='".$module_name."'";
+
 /*
     Các function để xóa các phần được chèn vào trong file của Nukeviet trước khi gỡ module
 */

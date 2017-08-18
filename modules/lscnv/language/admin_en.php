@@ -56,6 +56,7 @@ $lang_module['123host_init_cache_failure'] = "Initialize Cache failure!";
 $lang_module['123host_edit_file_failure'] = "Error: Can not edit file ";
 $lang_module['123host_edit_file'] = "Edit file ";
 $lang_module['123host_success'] = " success!";
+$lang_module['123host_not_at_123host'] = "This module only support with Hosting at <a href='https://123host.vn/' target='_blank'>123HOST</a>. Please use <a href='https://123host.vn/nukeviet-hosting.html' target='_blank'> Nukeviet Hosting </a> at <a> 123HOST </a> for best support and amazing speed for Nukeviet Website.";
 $lang_module['123host_general_config'] = "General configuration";
 $lang_module['123host_specific_pages'] = "Specific Pages";
 $lang_module['123host_information'] = "Information";
@@ -136,3 +137,4 @@ $lang_module['123host_support_info_des1'] = "<h4>Please contact us:</h4>
 
 $lang_module['123host_check_compatibility'] = "Check Compatibility";
 $lang_module['123host_seconds'] = "seconds";
+$lang_module['123host_click_here'] = "Click here";

@@ -56,6 +56,7 @@ $lang_module['123host_init_cache_failure'] = "Khởi tạo hệ thống Cache th
 $lang_module['123host_edit_file_failure'] = "Lỗi: Không thể hiệu chỉnh file ";
 $lang_module['123host_edit_file'] = "Hiệu chỉnh file ";
 $lang_module['123host_success'] = " thành công!";
+$lang_module['123host_not_at_123host'] = "Module chỉ tương thích với Web Server của <a href='https://123host.vn/' target='_blank'>123HOST</a>. Hãy sử dụng dịch vụ <a href='https://123host.vn/nukeviet-hosting.html' target='_blank'>Nukeviet Hosting</a> tại <a>123HOST</a> để được hỗ trợ và tối ưu tốt nhất cho Nukeviet.";
 $lang_module['123host_general_config'] = "Cấu hình chung";
 $lang_module['123host_specific_pages'] = "Chỉ định cho trang";
 $lang_module['123host_information'] = "Thông tin";
@@ -141,3 +142,4 @@ $lang_module['123host_support_info_des1'] = "<h4>Mọi thông tin hỗ trợ vui
 </ul>";
 $lang_module['123host_check_compatibility'] = "Kiểm tra tương thích";
 $lang_module['123host_seconds'] = "giây";
+$lang_module['123host_click_here'] = "Click vào đây";
