@@ -109,6 +109,14 @@ function enableCacheRewrite($publicCacheTTL, $frontPageCacheTTL, $cacheLoginPage
   RewriteCond %{REQUEST_METHOD} ^HEAD|GET|PURGE$
   ### 123HOST - HTTP METHOD
 
+  ### 123HOST LSCache - INDEX
+  RewriteCond %{REQUEST_URI} !^/index.php
+  ### 123HOST LSCache - INDEX
+
+  ### 123HOST LSCache - SHOP MODULE
+  RewriteCond %{REQUEST_URI} !cart|order|payment
+  ### 123HOST LSCache - SHOP MODULE
+
   ### 123HOST LSCache - MOBILE
   RewriteCond %{HTTP_USER_AGENT} \"android|avantgo|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge\ |maemo|midp|mmp|opera\ m(ob|in)i|palm(\ os)?|phone|p(ixi|re)\/|plucker|pocket|psp|symbian|treo|up\.(browser|link)|vodafone|wap|windows\ (ce|phone)|xda|xiino\" [NC]
   RewriteRule .* - [E=Cache-Control:vary=ismobile]
@@ -187,15 +195,18 @@ function disableCacheRewrite(&$message) {
 
 /*
     Fix các file admin_login.php và admin_logout.php để hỗ trợ cache cho Nukeviet
+    Hỗ trợ module Shops
 */
 function addCookieHandle(&$message) {
     global $lang_module;
 
     $adminLogin = NV_ROOTDIR . '/includes/core/admin_login.php';
     $adminLogout = NV_ROOTDIR . '/includes/core/admin_logout.php';
+    $shopSetCart = NV_ROOTDIR . '/modules/shops/funcs/setcart.php';
 
     $adminLoginPatternNv34To40 = "/admin\_lev\ \=\ intval/";
     $adminLoginPatternNv42 = "/row\[\'admin\_lev\'\]\ \=\ intval/";
+    $shopSetCartPattern = "/update\_cart\ \=\ true/";
     
     $adminLogoutPattern = "/unset\_request\(\'admin\,online/";
 
@@ -214,12 +225,28 @@ function addCookieHandle(&$message) {
 
     array_splice( $contentByLine, $insertLineNum, 0, $setCookie ); 
 
-    file_put_contents($adminLogin, implode("", $contentByLine), LOCK_EX);  
+    file_put_contents($adminLogin, implode("", $contentByLine), LOCK_EX); 
+    
+     /* Module shop support */
+    if ( file_exists($shopSetCart) ) {
+        $insertLineNum = 0;
+        $contentByLine = file($shopSetCart);
+        foreach ( $contentByLine as $lineNum => $lineContent ) {
+            if ( preg_match($shopSetCartPattern, $lineContent) ) {
+                $insertLineNum = $lineNum + 1;
+            }
+        }
+    
+        array_splice( $contentByLine, $insertLineNum, 0, $setCookie ); 
+    
+        file_put_contents($shopSetCart, implode("", $contentByLine), LOCK_EX);  
+    }
 
     /* Insert code to remove cookie after admin logout */
     $contentByLine = file($adminLogout);
 
     $i = 0;
+    $insertLineNum = 0;
     foreach ( $contentByLine as $lineNum => $lineContent ) {
         if ( preg_match($adminLogoutPattern, $lineContent) ) {
             $insertLineNum = $lineNum + 1;
@@ -236,6 +263,8 @@ function addCookieHandle(&$message) {
         $message = $lang_module['123host_init_cache_failure'];
         return FALSE;
     }
+
+   
     
 }
 
@@ -256,7 +285,8 @@ function removeCookieHandle(&$message) {
    
     $matches  = preg_grep ($beginAdminLoginPattern, $contentByLine);
     $numberOfBlock = count($matches);
-
+    $beginLineNum = null;
+    $endLineNum = null;
     for ($i=0; $i < $numberOfBlock; $i++) {
 
         /* Find Begin and End lines 123HOST LSCache rewrite of Admin LOGIN */
@@ -272,7 +302,7 @@ function removeCookieHandle(&$message) {
         }
 
         // Detroy lines
-        if (isset($beginLineNum) && isset($endLineNum)) {
+        if (is_numeric($beginLineNum) && is_numeric($endLineNum)) {
             foreach ( $contentByLine as $lineNum => $lineContent ) {
                 if ( $lineNum >= $beginLineNum && $lineNum <= $endLineNum ) {
                     $contentByLine[$lineNum] = "";
@@ -283,7 +313,7 @@ function removeCookieHandle(&$message) {
 
     }
 
-     /* Remove Cookie Handle in admin LOGOUT File */
+    /* Remove Cookie Handle in admin LOGOUT File */
     $adminLogoutFile = NV_ROOTDIR . '/includes/core/admin_logout.php';
     $beginAdminLogoutPattern = "/123HOST LSCache begin remove cookie/";
     $endAdminLogoutPattern = "/123HOST LSCache end remove cookie/";
@@ -292,6 +322,8 @@ function removeCookieHandle(&$message) {
     $matches  = preg_grep ($beginAdminLogoutPattern, $contentByLine);
     $numberOfBlock = count($matches);
    
+    $beginLineNum = null;
+    $endLineNum = null;
     for ($i=0; $i < $numberOfBlock; $i++) {
         
         // Find Begin and End 123HOST LSCache rewrite of Admin LOGOUT 
@@ -305,7 +337,7 @@ function removeCookieHandle(&$message) {
         }
 
         // Detroy lines
-        if (isset($beginLineNum) && isset($endLineNum)) {
+        if (is_numeric($beginLineNum) && is_numeric($endLineNum)) {
             foreach ( $contentByLine as $lineNum => $lineContent ) {
                 if ( $lineNum >= $beginLineNum && $lineNum <= $endLineNum ) {
                     $contentByLine[$lineNum] = "";
@@ -315,6 +347,42 @@ function removeCookieHandle(&$message) {
         }
     }
 
+    /* Remove Cookie Handle in shop module */
+    $shopSetCart = NV_ROOTDIR . '/modules/shops/funcs/setcart.php';
+
+    if ( file_exists($shopSetCart) ) {
+        $beginshopSetCartPattern = "/123HOST LSCache begin add cookie/";
+        $endshopSetCartPattern = "/123HOST LSCache end add cookie/";
+
+        $contentByLine = file($shopSetCart);
+        $matches  = preg_grep ($beginshopSetCartPattern, $contentByLine);
+        $numberOfBlock = count($matches);
+    
+        $beginLineNum = null;
+        $endLineNum = null;
+        for ($i=0; $i < $numberOfBlock; $i++) {
+            
+            $contentByLine = file($shopSetCart);
+
+            foreach ( $contentByLine as $lineNum => $lineContent ) {
+                if (preg_match($beginshopSetCartPattern, $lineContent))
+                    $beginLineNum = $lineNum;
+
+                if (preg_match($endshopSetCartPattern, $lineContent))
+                    $endLineNum = $lineNum;
+            }
+
+            // Detroy lines
+            if (is_numeric($beginLineNum) && is_numeric($endLineNum)) {
+                foreach ( $contentByLine as $lineNum => $lineContent ) {
+                    if ( $lineNum >= $beginLineNum && $lineNum <= $endLineNum ) {
+                        $contentByLine[$lineNum] = "";
+                    }
+                } 
+                file_put_contents($shopSetCart, implode("", $contentByLine), LOCK_EX);    
+            }
+        }
+    }
     
 }
 

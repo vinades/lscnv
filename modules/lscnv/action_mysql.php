@@ -40,23 +40,21 @@ $sql_create_module[] = "INSERT INTO " . $db_config['prefix'] . "_" . $module_dat
 
 $sql_create_module[] = "UPDATE " . NV_MODULES_TABLE . " SET custom_title='123HOST LSCache' WHERE title='".$module_name."'";
 
-/*
-    Các function để xóa các phần được chèn vào trong file của Nukeviet trước khi gỡ module
-*/
 function removeCookieHandle(&$message) {
     global $lang_module;
 
     /* Remove Cookie Handle in admin LOGIN file */
     $adminLoginFile = NV_ROOTDIR . '/includes/core/admin_login.php';
-
+    
     $beginAdminLoginPattern = "/123HOST LSCache begin add cookie/";
     $endAdminLoginPattern = "/123HOST LSCache end add cookie/";
 
     $contentByLine = file($adminLoginFile);
-
+   
     $matches  = preg_grep ($beginAdminLoginPattern, $contentByLine);
     $numberOfBlock = count($matches);
-
+    $beginLineNum = null;
+    $endLineNum = null;
     for ($i=0; $i < $numberOfBlock; $i++) {
 
         /* Find Begin and End lines 123HOST LSCache rewrite of Admin LOGIN */
@@ -65,25 +63,25 @@ function removeCookieHandle(&$message) {
             if (preg_match($beginAdminLoginPattern, $lineContent)) {
                 $beginLineNum = $lineNum;
             }
-
+                
             if (preg_match($endAdminLoginPattern, $lineContent))
                 $endLineNum = $lineNum;
 
         }
 
         // Detroy lines
-        if (isset($beginLineNum) && isset($endLineNum)) {
+        if (is_numeric($beginLineNum) && is_numeric($endLineNum)) {
             foreach ( $contentByLine as $lineNum => $lineContent ) {
                 if ( $lineNum >= $beginLineNum && $lineNum <= $endLineNum ) {
                     $contentByLine[$lineNum] = "";
                 }
-            }
-            file_put_contents($adminLoginFile, implode("", $contentByLine), LOCK_EX);
+            } 
+            file_put_contents($adminLoginFile, implode("", $contentByLine), LOCK_EX);    
         }
 
     }
 
-     /* Remove Cookie Handle in admin LOGOUT File */
+    /* Remove Cookie Handle in admin LOGOUT File */
     $adminLogoutFile = NV_ROOTDIR . '/includes/core/admin_logout.php';
     $beginAdminLogoutPattern = "/123HOST LSCache begin remove cookie/";
     $endAdminLogoutPattern = "/123HOST LSCache end remove cookie/";
@@ -91,10 +89,12 @@ function removeCookieHandle(&$message) {
     $contentByLine = file($adminLogoutFile);
     $matches  = preg_grep ($beginAdminLogoutPattern, $contentByLine);
     $numberOfBlock = count($matches);
-
+   
+    $beginLineNum = null;
+    $endLineNum = null;
     for ($i=0; $i < $numberOfBlock; $i++) {
-
-        // Find Begin and End 123HOST LSCache rewrite of Admin LOGOUT
+        
+        // Find Begin and End 123HOST LSCache rewrite of Admin LOGOUT 
         $contentByLine = file($adminLogoutFile);
         foreach ( $contentByLine as $lineNum => $lineContent ) {
             if (preg_match($beginAdminLogoutPattern, $lineContent))
@@ -105,19 +105,54 @@ function removeCookieHandle(&$message) {
         }
 
         // Detroy lines
-        if (isset($beginLineNum) && isset($endLineNum)) {
+        if (is_numeric($beginLineNum) && is_numeric($endLineNum)) {
             foreach ( $contentByLine as $lineNum => $lineContent ) {
                 if ( $lineNum >= $beginLineNum && $lineNum <= $endLineNum ) {
                     $contentByLine[$lineNum] = "";
                 }
-            }
-            file_put_contents($adminLogoutFile, implode("", $contentByLine), LOCK_EX);
+            } 
+            file_put_contents($adminLogoutFile, implode("", $contentByLine), LOCK_EX);    
         }
     }
 
+    /* Remove Cookie Handle in shop module */
+    $shopSetCart = NV_ROOTDIR . '/modules/shops/funcs/setcart.php';
 
+    if ( file_exists($shopSetCart) ) {
+        $beginshopSetCartPattern = "/123HOST LSCache begin add cookie/";
+        $endshopSetCartPattern = "/123HOST LSCache end add cookie/";
+
+        $contentByLine = file($shopSetCart);
+        $matches  = preg_grep ($beginshopSetCartPattern, $contentByLine);
+        $numberOfBlock = count($matches);
+    
+        $beginLineNum = null;
+        $endLineNum = null;
+        for ($i=0; $i < $numberOfBlock; $i++) {
+            
+            $contentByLine = file($shopSetCart);
+
+            foreach ( $contentByLine as $lineNum => $lineContent ) {
+                if (preg_match($beginshopSetCartPattern, $lineContent))
+                    $beginLineNum = $lineNum;
+
+                if (preg_match($endshopSetCartPattern, $lineContent))
+                    $endLineNum = $lineNum;
+            }
+
+            // Detroy lines
+            if (is_numeric($beginLineNum) && is_numeric($endLineNum)) {
+                foreach ( $contentByLine as $lineNum => $lineContent ) {
+                    if ( $lineNum >= $beginLineNum && $lineNum <= $endLineNum ) {
+                        $contentByLine[$lineNum] = "";
+                    }
+                } 
+                file_put_contents($shopSetCart, implode("", $contentByLine), LOCK_EX);    
+            }
+        }
+    }
+    
 }
-
 
 function removePurgeCacheHandle(&$message) {
     global $lang_module;
@@ -211,7 +246,6 @@ if ($op == 'del' || $op == 'recreate_mod') {
     removeCookieHandle($message);
     removePurgeCacheHandle($message);
     disableCacheRewrite($message);
-  
     $query = "TRUNCATE TABLE " . $db_config['prefix'] . "_" . $module_data . "_config";
     $row = $db->prepare($query); 
     $row->execute();
