@@ -5,7 +5,7 @@
  * Module Name:       123HOST LSCache
  * Module URI:        https://123host.vn/nukeviet-hosting.html
  * Description:       Nukeviet module to connect to Caching Web Server at 123HOST
- * Version:           1.0.00
+ * Version:           1.0.01
  * Author:            Digital Storage Company Limited
  * Author URI:        https://123host.vn/
  * License:           GPLv3
@@ -40,161 +40,95 @@ $sql_create_module[] = "INSERT INTO " . $db_config['prefix'] . "_" . $module_dat
 
 $sql_create_module[] = "UPDATE " . NV_MODULES_TABLE . " SET custom_title='123HOST LSCache' WHERE title='".$module_name."'";
 
+function fileDelContentWithPattern($file, $beginPattern, $endPattern, &$message) {
+    global $lang_module;
+    if ( !is_writable($file) ) {
+        $message = 'File <strong>' . $file . '</strong> ' . $lang_module['123host_file_not_exist_or_write'];
+        return FALSE;
+    }
+
+    $contentByLine = file($file);
+    $matches  = preg_grep ($beginPattern, $contentByLine);
+    $numberOfBlock = count($matches);
+
+    for ($i=0; $i < $numberOfBlock; $i++) {
+
+        /* Find Begin and End lines 123HOST LSCache rewrite of Admin LOGIN */
+        $contentByLine = file($file);
+        foreach ( $contentByLine as $lineNum => $lineContent ) {
+            if (preg_match($beginPattern, $lineContent)) {
+                $beginLineNum = $lineNum;
+            }
+                
+            if (preg_match($endPattern, $lineContent))
+                $endLineNum = $lineNum;
+
+        }
+
+        // Detroy lines
+        if (is_numeric($beginLineNum) && is_numeric($endLineNum)) {
+            foreach ( $contentByLine as $lineNum => $lineContent ) {
+                if ( $lineNum >= $beginLineNum && $lineNum <= $endLineNum ) {
+                    $contentByLine[$lineNum] = "";
+                }
+            } 
+            if (! file_put_contents($file, implode("", $contentByLine), LOCK_EX) ) {
+                $message = 'File <strong>' . $file . '</strong> ' . $lang_module['123host_file_not_exist_or_write'];
+                return FALSE;
+            }
+
+        }
+    }
+
+    $message = $lang_module['123host_edit_file'] . $file . '</strong> ' .$lang_module['123host_success'];
+    return TRUE;
+}
+
+/*
+    Xóa các file đã thêm vào admin_login.php và admin_logout.php
+    Run lúc uninstall module để gỡ bỏ module
+*/
 function removeCookieHandle(&$message) {
     global $lang_module;
 
     /* Remove Cookie Handle in admin LOGIN file */
     $adminLoginFile = NV_ROOTDIR . '/includes/core/admin_login.php';
-    
-    $beginAdminLoginPattern = "/123HOST LSCache begin add cookie/";
-    $endAdminLoginPattern = "/123HOST LSCache end add cookie/";
+    $beginAddCookiePattern = "/123HOST LSCache begin add cookie/";
+    $endAddCookiePattern = "/123HOST LSCache end add cookie/";
 
-    $contentByLine = file($adminLoginFile);
-   
-    $matches  = preg_grep ($beginAdminLoginPattern, $contentByLine);
-    $numberOfBlock = count($matches);
-    $beginLineNum = null;
-    $endLineNum = null;
-    for ($i=0; $i < $numberOfBlock; $i++) {
-
-        /* Find Begin and End lines 123HOST LSCache rewrite of Admin LOGIN */
-        $contentByLine = file($adminLoginFile);
-        foreach ( $contentByLine as $lineNum => $lineContent ) {
-            if (preg_match($beginAdminLoginPattern, $lineContent)) {
-                $beginLineNum = $lineNum;
-            }
-                
-            if (preg_match($endAdminLoginPattern, $lineContent))
-                $endLineNum = $lineNum;
-
-        }
-
-        // Detroy lines
-        if (is_numeric($beginLineNum) && is_numeric($endLineNum)) {
-            foreach ( $contentByLine as $lineNum => $lineContent ) {
-                if ( $lineNum >= $beginLineNum && $lineNum <= $endLineNum ) {
-                    $contentByLine[$lineNum] = "";
-                }
-            } 
-            file_put_contents($adminLoginFile, implode("", $contentByLine), LOCK_EX);    
-        }
-
-    }
-
-    /* Remove Cookie Handle in admin LOGOUT File */
     $adminLogoutFile = NV_ROOTDIR . '/includes/core/admin_logout.php';
     $beginAdminLogoutPattern = "/123HOST LSCache begin remove cookie/";
     $endAdminLogoutPattern = "/123HOST LSCache end remove cookie/";
 
-    $contentByLine = file($adminLogoutFile);
-    $matches  = preg_grep ($beginAdminLogoutPattern, $contentByLine);
-    $numberOfBlock = count($matches);
-   
-    $beginLineNum = null;
-    $endLineNum = null;
-    for ($i=0; $i < $numberOfBlock; $i++) {
-        
-        // Find Begin and End 123HOST LSCache rewrite of Admin LOGOUT 
-        $contentByLine = file($adminLogoutFile);
-        foreach ( $contentByLine as $lineNum => $lineContent ) {
-            if (preg_match($beginAdminLogoutPattern, $lineContent))
-                $beginLineNum = $lineNum;
-
-            if (preg_match($endAdminLogoutPattern, $lineContent))
-                $endLineNum = $lineNum;
-        }
-
-        // Detroy lines
-        if (is_numeric($beginLineNum) && is_numeric($endLineNum)) {
-            foreach ( $contentByLine as $lineNum => $lineContent ) {
-                if ( $lineNum >= $beginLineNum && $lineNum <= $endLineNum ) {
-                    $contentByLine[$lineNum] = "";
-                }
-            } 
-            file_put_contents($adminLogoutFile, implode("", $contentByLine), LOCK_EX);    
-        }
-    }
-
     /* Remove Cookie Handle in shop module */
-    $shopSetCart = NV_ROOTDIR . '/modules/shops/funcs/setcart.php';
+    $shopSetCartFile = NV_ROOTDIR . '/modules/shops/funcs/setcart.php';
+    fileDelContentWithPattern($shopSetCartFile, $beginAddCookiePattern, $endAddCookiePattern, $message);
 
-    if ( file_exists($shopSetCart) ) {
-        $beginshopSetCartPattern = "/123HOST LSCache begin add cookie/";
-        $endshopSetCartPattern = "/123HOST LSCache end add cookie/";
+    /* Remove Cookie Handle in admin LOGIN and LOGOUT file */
 
-        $contentByLine = file($shopSetCart);
-        $matches  = preg_grep ($beginshopSetCartPattern, $contentByLine);
-        $numberOfBlock = count($matches);
-    
-        $beginLineNum = null;
-        $endLineNum = null;
-        for ($i=0; $i < $numberOfBlock; $i++) {
-            
-            $contentByLine = file($shopSetCart);
-
-            foreach ( $contentByLine as $lineNum => $lineContent ) {
-                if (preg_match($beginshopSetCartPattern, $lineContent))
-                    $beginLineNum = $lineNum;
-
-                if (preg_match($endshopSetCartPattern, $lineContent))
-                    $endLineNum = $lineNum;
-            }
-
-            // Detroy lines
-            if (is_numeric($beginLineNum) && is_numeric($endLineNum)) {
-                foreach ( $contentByLine as $lineNum => $lineContent ) {
-                    if ( $lineNum >= $beginLineNum && $lineNum <= $endLineNum ) {
-                        $contentByLine[$lineNum] = "";
-                    }
-                } 
-                file_put_contents($shopSetCart, implode("", $contentByLine), LOCK_EX);    
-            }
-        }
+    if ( fileDelContentWithPattern($adminLoginFile, $beginAddCookiePattern, $endAddCookiePattern, $message) && fileDelContentWithPattern($adminLogoutFile, $beginAdminLogoutPattern, $endAdminLogoutPattern, $message) ) {
+        $message = $lang_module['123host_init_cache_success'];
+        return TRUE;
+    } else {
+        return FALSE;
     }
-    
 }
 
 function removePurgeCacheHandle(&$message) {
     global $lang_module;
-
-    $cacheFile = NV_ROOTDIR . '/vendor/vinades/nukeviet/Cache/Files.php';
-
+    
+    $cacheFile = NV_ROOTDIR . '/vendor/vinades/nukeviet/Cache/Files.php';        
+    
     $beginModifyPattern = "/123HOST LSCache begin mofidy/";
     $endModifyPattern = "/123HOST LSCache end mofidy/";
-
-    $contentByLine = file($cacheFile);
-
-
-    $matches  = preg_grep ($beginModifyPattern, $contentByLine);
-    $numberOfBlock = count($matches);
-
-    for ($i=0; $i < $numberOfBlock; $i++) {
-
-        // Find Begin and End 123HOST modify
-        $contentByLine = file($cacheFile);
-        foreach ( $contentByLine as $lineNum => $lineContent ) {
-            if (preg_match($beginModifyPattern, $lineContent))
-                $beginLineNum = $lineNum;
-
-            if (preg_match($endModifyPattern, $lineContent))
-                $endLineNum = $lineNum;
-        }
-
-        // Detroy lines
-        if (isset($beginLineNum) && isset($endLineNum)) {
-            foreach ( $contentByLine as $lineNum => $lineContent ) {
-                if ( $lineNum >= $beginLineNum && $lineNum <= $endLineNum ) {
-                    $contentByLine[$lineNum] = "";
-                }
-            }
-            if(!file_put_contents($cacheFile, implode("", $contentByLine), LOCK_EX)){
-                $message = $lang_module['123host_edit_file_failure'] . $cacheFile;
-                return FALSE;
-            }
-        }
+    
+    if ( fileDelContentWithPattern($cacheFile, $beginModifyPattern, $endModifyPattern, $message) ) {
+        $message = $lang_module['123host_init_cache_success'];
+        return TRUE;
+    } else {
+        return FALSE;
     }
-    $message = $lang_module['123host_edit_file'] . $cacheFile . $lang_module['123host_success'];
-    return TRUE;
+
 }
 
 /*
@@ -206,37 +140,15 @@ function disableCacheRewrite(&$message) {
     $htaccessFile = NV_ROOTDIR . '/.htaccess';
 
     /** Try to delete 123HOST LSCache content from .htaccess file **/
-    $contentByLine = file($htaccessFile);
     $beginPattern = "/########## Begin 123HOST LSCache/";
     $endPattern = "/########## End - 123HOST LSCache/";
 
-    // Find first and end 123HOST LSCache rewrite
-    foreach ( $contentByLine as $lineNum => $lineContent ) {
-        if (preg_match($beginPattern, $lineContent))
-            $beginLineNum = $lineNum;
-
-        if (preg_match($endPattern, $lineContent))
-            $endLineNum = $lineNum;
-
-    }
-
-    if (isset($beginLineNum) && isset($endLineNum)) {
-        foreach ( $contentByLine as $lineNum => $lineContent ) {
-            if ( $lineNum >= $beginLineNum && $lineNum <= $endLineNum ) {
-                $contentByLine[$lineNum] = "";
-            }
-        }
-        if(file_put_contents($htaccessFile, implode("", $contentByLine), LOCK_EX)) {
-            $message = $lang_module['123host_disable_cache_success'];
-            return TRUE;
-        }
-        else {
-            $message = $lang_module['123host_disable_cache_failure'] . " <a href='" . NV_BASE_ADMINURL . 'index.php?' . NV_LANG_VARIABLE . '=' . NV_LANG_DATA . '&amp;' . NV_NAME_VARIABLE . '=lscnv&amp;' . NV_OP_VARIABLE . '=main' . '&amp;' . 'action=checkRequirement' . "'>"  . $lang_module['123host_check_check_req']  . "</a>";
-            return FALSE;
-        }
+    if ( fileDelContentWithPattern($htaccessFile, $beginPattern, $endPattern, $message) ) {
+        $message = $lang_module['123host_disable_cache_success'];
+        return TRUE;
     } else {
-            $message = $lang_module['123host_disable_cache_failure'] . "<a href='" . NV_BASE_ADMINURL . 'index.php?' . NV_LANG_VARIABLE . '=' . NV_LANG_DATA . '&amp;' . NV_NAME_VARIABLE . '=lscnv&amp;' . NV_OP_VARIABLE . '=main' . '&amp;' . 'action=checkRequirement' . "'>"  . $lang_module['123host_check_check_req']  . " </a>";
-            return FALSE;
+        $message = $lang_module['123host_disable_cache_failure'] . " <a href='" . NV_BASE_ADMINURL . 'index.php?' . NV_LANG_VARIABLE . '=' . NV_LANG_DATA . '&amp;' . NV_NAME_VARIABLE . '=lscnv&amp;' . NV_OP_VARIABLE . '=main' . '&amp;' . 'action=checkRequirement' . "'>"  . $lang_module['123host_check_check_req']  . "</a>";
+        return FALSE;
     }
 }
 
@@ -246,7 +158,6 @@ if ($op == 'del' || $op == 'recreate_mod') {
     removeCookieHandle($message);
     removePurgeCacheHandle($message);
     disableCacheRewrite($message);
-    die();
     $query = "TRUNCATE TABLE " . $db_config['prefix'] . "_" . $module_data . "_config";
     $row = $db->prepare($query); 
     $row->execute();
@@ -254,4 +165,5 @@ if ($op == 'del' || $op == 'recreate_mod') {
     $query = "INSERT INTO " . $db_config['prefix'] . "_" . $module_data . "_config VALUES ('sys','global','cache_status','0'),('sys','global','first_run','0'),('sys','global','public_cache_ttl','604800'),('sys','global','front_page_cache_ttl','604800'),('sys','global','cache_login_page','0'),('sys','global','cache_favicon','1'),('sys','global','fix_purge_cache','0'),('sys','global','fix_cookie','0')";
     $row = $db->prepare($query); 
     $row->execute();
+    
 }

@@ -5,7 +5,7 @@
  * Module Name:       123HOST LSCache
  * Module URI:        https://123host.vn/nukeviet-hosting.html
  * Description:       Nukeviet module to connect to Caching Web Server at 123HOST
- * Version:           1.0.00
+ * Version:           1.0.01
  * Author:            Digital Storage Company Limited
  * Author URI:        https://123host.vn/
  * License:           GPLv3
@@ -99,7 +99,7 @@ switch ($action) {
                 break 1;
             }
             // Thực hiện thêm các đoạn code xử lý cookie vào Nukeviet
-            //removeCookieHandle($message);
+            removeCookieHandle($message);
             if(addCookieHandle($message)) {
                 try {
                     $query = "UPDATE " . $db_config['prefix'] . "_" . $module_data . "_config SET config_value='1' WHERE config_name='fix_cookie'";

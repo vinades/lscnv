@@ -5,7 +5,7 @@
  * Module Name:       123HOST LSCache
  * Module URI:        https://123host.vn/nukeviet-hosting.html
  * Description:       Nukeviet module to connect to Caching Web Server at 123HOST
- * Version:           1.0.00
+ * Version:           1.0.01
  * Author:            Digital Storage Company Limited
  * Author URI:        https://123host.vn/
  * License:           GPLv3
@@ -149,49 +149,6 @@ function enableCacheRewrite($publicCacheTTL, $frontPageCacheTTL, $cacheLoginPage
 
 }
 
-/*
-    Tắt rewrite cache tại .htaccess
-        Xóa tất cả các rewrite rule cache
-*/
-function disableCacheRewrite(&$message) {
-    global $lang_module;
-    $htaccessFile = NV_ROOTDIR . '/.htaccess';
-
-    /** Try to delete 123HOST LSCache content from .htaccess file **/
-    $contentByLine = file($htaccessFile);
-    $beginPattern = "/########## Begin 123HOST LSCache/";
-    $endPattern = "/########## End - 123HOST LSCache/";
-
-    // Find first and end 123HOST LSCache rewrite
-    foreach ( $contentByLine as $lineNum => $lineContent ) {
-        if (preg_match($beginPattern, $lineContent))
-            $beginLineNum = $lineNum;
-
-        if (preg_match($endPattern, $lineContent))
-            $endLineNum = $lineNum;
-
-    }
-
-    if (isset($beginLineNum) && isset($endLineNum)) {
-        foreach ( $contentByLine as $lineNum => $lineContent ) {
-            if ( $lineNum >= $beginLineNum && $lineNum <= $endLineNum ) {
-                $contentByLine[$lineNum] = "";
-            }
-        } 
-        if(file_put_contents($htaccessFile, implode("", $contentByLine), LOCK_EX)) {
-            $message = $lang_module['123host_disable_cache_success'];
-            return TRUE;
-        } 
-        else {
-            $message = $lang_module['123host_disable_cache_failure'] . " <a href='" . NV_BASE_ADMINURL . 'index.php?' . NV_LANG_VARIABLE . '=' . NV_LANG_DATA . '&amp;' . NV_NAME_VARIABLE . '=lscnv&amp;' . NV_OP_VARIABLE . '=main' . '&amp;' . 'action=checkRequirement' . "'>"  . $lang_module['123host_check_check_req']  . "</a>";
-            return FALSE;
-        }
-    } else {
-            $message = $lang_module['123host_disable_cache_failure'] . "<a href='" . NV_BASE_ADMINURL . 'index.php?' . NV_LANG_VARIABLE . '=' . NV_LANG_DATA . '&amp;' . NV_NAME_VARIABLE . '=lscnv&amp;' . NV_OP_VARIABLE . '=main' . '&amp;' . 'action=checkRequirement' . "'>"  . $lang_module['123host_check_check_req']  . " </a>";
-            return FALSE;
-    }
-}
-
 function filePutContentWithPattern($file, $pattern, $content, $line, &$message) {
          
     global $lang_module;
@@ -200,12 +157,12 @@ function filePutContentWithPattern($file, $pattern, $content, $line, &$message) 
         return FALSE;
     }
     $contentByLine = file($file);
-    
+    $i = 0;
     foreach ( $contentByLine as $lineNum => $lineContent ) {
         if ( preg_match($pattern, $lineContent) ) {
 
-            $insertLineNum = $lineNum + $line;
-/*
+            $insertLineNum = $lineNum + $line + $i;
+
             array_splice( $contentByLine, $insertLineNum, 0, $content ); 
 
             if ( !file_put_contents($file, implode("", $contentByLine), LOCK_EX) ) {
@@ -213,20 +170,12 @@ function filePutContentWithPattern($file, $pattern, $content, $line, &$message) 
                 $message = 'File <strong>' . $file . '</strong> ' . $lang_module['123host_file_not_exist_or_write'];
 
                 return FALSE;
-            } */
+            }
+            $i = $i + 1; 
         }
     }
-    
-    array_splice( $contentByLine, $insertLineNum, 0, $content ); 
 
-    if ( file_put_contents($file, implode("", $contentByLine), LOCK_EX) ) {
-        $message = $lang_module['123host_edit_file'] . $file . '</strong> ' .$lang_module['123host_success'];
-        return TRUE;
-    } else {
-        $message = 'File <strong>' . $file . '</strong> ' . $lang_module['123host_file_not_exist_or_write'];
-        return FALSE;
-    } 
-    //return TRUE;
+    return TRUE;
 }
 
 function fileDelContentWithPattern($file, $beginPattern, $endPattern, &$message) {
@@ -245,11 +194,11 @@ function fileDelContentWithPattern($file, $beginPattern, $endPattern, &$message)
         /* Find Begin and End lines 123HOST LSCache rewrite of Admin LOGIN */
         $contentByLine = file($file);
         foreach ( $contentByLine as $lineNum => $lineContent ) {
-            if (preg_match($beginAdminLoginPattern, $lineContent)) {
+            if (preg_match($beginPattern, $lineContent)) {
                 $beginLineNum = $lineNum;
             }
                 
-            if (preg_match($endAdminLoginPattern, $lineContent))
+            if (preg_match($endPattern, $lineContent))
                 $endLineNum = $lineNum;
 
         }
@@ -274,6 +223,28 @@ function fileDelContentWithPattern($file, $beginPattern, $endPattern, &$message)
 }
 
 /*
+    Tắt rewrite cache tại .htaccess
+        Xóa tất cả các rewrite rule cache
+*/
+function disableCacheRewrite(&$message) {
+    global $lang_module;
+    $htaccessFile = NV_ROOTDIR . '/.htaccess';
+
+    /** Try to delete 123HOST LSCache content from .htaccess file **/
+    $beginPattern = "/########## Begin 123HOST LSCache/";
+    $endPattern = "/########## End - 123HOST LSCache/";
+
+    if ( fileDelContentWithPattern($htaccessFile, $beginPattern, $endPattern, $message) ) {
+        $message = $lang_module['123host_disable_cache_success'];
+        return TRUE;
+    } else {
+        $message = $lang_module['123host_disable_cache_failure'] . " <a href='" . NV_BASE_ADMINURL . 'index.php?' . NV_LANG_VARIABLE . '=' . NV_LANG_DATA . '&amp;' . NV_NAME_VARIABLE . '=lscnv&amp;' . NV_OP_VARIABLE . '=main' . '&amp;' . 'action=checkRequirement' . "'>"  . $lang_module['123host_check_check_req']  . "</a>";
+        return FALSE;
+    }
+}
+
+
+/*
     Fix các file admin_login.php và admin_logout.php để hỗ trợ cache cho Nukeviet
     Hỗ trợ module Shops
 */
@@ -295,9 +266,9 @@ function addCookieHandle(&$message) {
 
     /* Module shop support. Insert code to create cookie after add item to cart */
     filePutContentWithPattern($shopSetCartFile, $shopSetCartPattern, $setCookie, 1, $message);
+
     /* Insert code to create cookie after admin login */
     /* Insert code to remove cookie after admin logout */
-    
     if ( filePutContentWithPattern($adminLoginFile, $adminLoginPattern, $setCookie,1 , $message) 
     && filePutContentWithPattern($adminLogoutFile, $adminLogoutPattern, $removeCookie, 1, $message) ) {
         $message = $lang_module['123host_init_cache_success'];
