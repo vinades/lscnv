@@ -34,7 +34,6 @@ $xtpl->assign( 'MODULE_NAME', $module_name );
 $xtpl->assign( 'OP', $op );
 
 
-
 /* 
     Lấy các giá trị cấu hình cache tại table _config của module 
         $publicCacheTTL : Thời gian cache chung (giây)
@@ -100,7 +99,7 @@ switch ($action) {
                 break 1;
             }
             // Thực hiện thêm các đoạn code xử lý cookie vào Nukeviet
-            removeCookieHandle($message);
+            //removeCookieHandle($message);
             if(addCookieHandle($message)) {
                 try {
                     $query = "UPDATE " . $db_config['prefix'] . "_" . $module_data . "_config SET config_value='1' WHERE config_name='fix_cookie'";
@@ -112,7 +111,7 @@ switch ($action) {
             }
             else {
                 $xtpl->assign( 'MESSAGE',"<div class=\"notice notice-error is-dismissible\"> <p>" . $message . "</p> </div>", $result );
-                break 2;
+                break 1;
             }
             // Thực hiện thêm các đoạn code xử lý purge cache phía Web server vào Nukeviet
             removePurgeCacheHandle($message);
@@ -127,7 +126,7 @@ switch ($action) {
             }
             else {
                 $xtpl->assign( 'MESSAGE',"<div class=\"notice notice-error is-dismissible\"> <p>" . $message . "</p> </div>", $result );
-                break 2;
+                break 1;
             }
             // Khởi tạo cookie đầu tiên bởi admin đã login từ trước.
             $nv_Request->set_Cookie('adlogin', '1');

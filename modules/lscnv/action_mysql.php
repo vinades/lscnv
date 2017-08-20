@@ -246,6 +246,7 @@ if ($op == 'del' || $op == 'recreate_mod') {
     removeCookieHandle($message);
     removePurgeCacheHandle($message);
     disableCacheRewrite($message);
+    die();
     $query = "TRUNCATE TABLE " . $db_config['prefix'] . "_" . $module_data . "_config";
     $row = $db->prepare($query); 
     $row->execute();

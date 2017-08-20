@@ -192,105 +192,58 @@ function disableCacheRewrite(&$message) {
     }
 }
 
-
-/*
-    Fix các file admin_login.php và admin_logout.php để hỗ trợ cache cho Nukeviet
-    Hỗ trợ module Shops
-*/
-function addCookieHandle(&$message) {
+function filePutContentWithPattern($file, $pattern, $content, $line, &$message) {
+         
     global $lang_module;
-
-    $adminLogin = NV_ROOTDIR . '/includes/core/admin_login.php';
-    $adminLogout = NV_ROOTDIR . '/includes/core/admin_logout.php';
-    $shopSetCart = NV_ROOTDIR . '/modules/shops/funcs/setcart.php';
-
-    $adminLoginPatternNv34To40 = "/admin\_lev\ \=\ intval/";
-    $adminLoginPatternNv42 = "/row\[\'admin\_lev\'\]\ \=\ intval/";
-    $shopSetCartPattern = "/update\_cart\ \=\ true/";
+    if ( !is_writable($file) ) {
+        $message = 'File <strong>' . $file . '</strong> ' . $lang_module['123host_file_not_exist_or_write'];
+        return FALSE;
+    }
+    $contentByLine = file($file);
     
-    $adminLogoutPattern = "/unset\_request\(\'admin\,online/";
-
-    $setCookie = array("//123HOST LSCache begin add cookie\n\$nv_Request->set_Cookie('adlogin', '1');\n//123HOST LSCache end add cookie\n");
-
-    $removeCookie = array("//123HOST LSCache begin remove cookie\n\$nv_Request->unset_request('adlogin', 'cookie');\n//123HOST LSCache end remove cookie\n");
-
-    /* Insert code to create cookie after admin login */
-    $contentByLine = file($adminLogin);
-
     foreach ( $contentByLine as $lineNum => $lineContent ) {
-        if (preg_match($adminLoginPatternNv34To40, $lineContent) || preg_match($adminLoginPatternNv42, $lineContent )) {
-            $insertLineNum = $lineNum + 1;
+        if ( preg_match($pattern, $lineContent) ) {
+
+            $insertLineNum = $lineNum + $line;
+/*
+            array_splice( $contentByLine, $insertLineNum, 0, $content ); 
+
+            if ( !file_put_contents($file, implode("", $contentByLine), LOCK_EX) ) {
+
+                $message = 'File <strong>' . $file . '</strong> ' . $lang_module['123host_file_not_exist_or_write'];
+
+                return FALSE;
+            } */
         }
     }
-
-    array_splice( $contentByLine, $insertLineNum, 0, $setCookie ); 
-
-    file_put_contents($adminLogin, implode("", $contentByLine), LOCK_EX); 
     
-     /* Module shop support */
-    if ( file_exists($shopSetCart) ) {
-        $insertLineNum = 0;
-        $contentByLine = file($shopSetCart);
-        foreach ( $contentByLine as $lineNum => $lineContent ) {
-            if ( preg_match($shopSetCartPattern, $lineContent) ) {
-                $insertLineNum = $lineNum + 1;
-            }
-        }
-    
-        array_splice( $contentByLine, $insertLineNum, 0, $setCookie ); 
-    
-        file_put_contents($shopSetCart, implode("", $contentByLine), LOCK_EX);  
-    }
+    array_splice( $contentByLine, $insertLineNum, 0, $content ); 
 
-    /* Insert code to remove cookie after admin logout */
-    $contentByLine = file($adminLogout);
-
-    $i = 0;
-    $insertLineNum = 0;
-    foreach ( $contentByLine as $lineNum => $lineContent ) {
-        if ( preg_match($adminLogoutPattern, $lineContent) ) {
-            $insertLineNum = $lineNum + 1;
-            array_splice( $contentByLine, $insertLineNum + $i, 0, $removeCookie );
-            $i++;
-        }
-    }
-
-    
-    if(file_put_contents($adminLogout, implode("", $contentByLine), LOCK_EX)) {
-        $message = $lang_module['123host_init_cache_success'];
+    if ( file_put_contents($file, implode("", $contentByLine), LOCK_EX) ) {
+        $message = $lang_module['123host_edit_file'] . $file . '</strong> ' .$lang_module['123host_success'];
         return TRUE;
     } else {
-        $message = $lang_module['123host_init_cache_failure'];
+        $message = 'File <strong>' . $file . '</strong> ' . $lang_module['123host_file_not_exist_or_write'];
+        return FALSE;
+    } 
+    //return TRUE;
+}
+
+function fileDelContentWithPattern($file, $beginPattern, $endPattern, &$message) {
+    global $lang_module;
+    if ( !is_writable($file) ) {
+        $message = 'File <strong>' . $file . '</strong> ' . $lang_module['123host_file_not_exist_or_write'];
         return FALSE;
     }
 
-   
-    
-}
-
-/*
-    Xóa các file đã thêm vào admin_login.php và admin_logout.php
-    Run lúc uninstall module để gỡ bỏ module
-*/
-function removeCookieHandle(&$message) {
-    global $lang_module;
-
-    /* Remove Cookie Handle in admin LOGIN file */
-    $adminLoginFile = NV_ROOTDIR . '/includes/core/admin_login.php';
-    
-    $beginAdminLoginPattern = "/123HOST LSCache begin add cookie/";
-    $endAdminLoginPattern = "/123HOST LSCache end add cookie/";
-
-    $contentByLine = file($adminLoginFile);
-   
-    $matches  = preg_grep ($beginAdminLoginPattern, $contentByLine);
+    $contentByLine = file($file);
+    $matches  = preg_grep ($beginPattern, $contentByLine);
     $numberOfBlock = count($matches);
-    $beginLineNum = null;
-    $endLineNum = null;
+
     for ($i=0; $i < $numberOfBlock; $i++) {
 
         /* Find Begin and End lines 123HOST LSCache rewrite of Admin LOGIN */
-        $contentByLine = file($adminLoginFile);
+        $contentByLine = file($file);
         foreach ( $contentByLine as $lineNum => $lineContent ) {
             if (preg_match($beginAdminLoginPattern, $lineContent)) {
                 $beginLineNum = $lineNum;
@@ -308,82 +261,82 @@ function removeCookieHandle(&$message) {
                     $contentByLine[$lineNum] = "";
                 }
             } 
-            file_put_contents($adminLoginFile, implode("", $contentByLine), LOCK_EX);    
-        }
+            if (! file_put_contents($file, implode("", $contentByLine), LOCK_EX) ) {
+                $message = 'File <strong>' . $file . '</strong> ' . $lang_module['123host_file_not_exist_or_write'];
+                return FALSE;
+            }
 
+        }
     }
 
-    /* Remove Cookie Handle in admin LOGOUT File */
+    $message = $lang_module['123host_edit_file'] . $file . '</strong> ' .$lang_module['123host_success'];
+    return TRUE;
+}
+
+/*
+    Fix các file admin_login.php và admin_logout.php để hỗ trợ cache cho Nukeviet
+    Hỗ trợ module Shops
+*/
+function addCookieHandle(&$message) {
+    global $lang_module;
+
+    $adminLoginFile = NV_ROOTDIR . '/includes/core/admin_login.php';
+    $adminLogoutFile = NV_ROOTDIR . '/includes/core/admin_logout.php';
+    $shopSetCartFile = NV_ROOTDIR . '/modules/shops/funcs/setcart.php';
+
+    $adminLoginPattern = "/admin\_lev\ \=\ intval|row\[\'admin\_lev\'\]\ \=\ intval/";
+    $shopSetCartPattern = "/update\_cart\ \=\ true/";
+    
+    $adminLogoutPattern = "/unset\_request\(\'admin\,online/";
+
+    $setCookie = array("//123HOST LSCache begin add cookie\n\$nv_Request->set_Cookie('adlogin', '1');\n//123HOST LSCache end add cookie\n");
+
+    $removeCookie = array("//123HOST LSCache begin remove cookie\n\$nv_Request->unset_request('adlogin', 'cookie');\n//123HOST LSCache end remove cookie\n");
+
+    /* Module shop support. Insert code to create cookie after add item to cart */
+    filePutContentWithPattern($shopSetCartFile, $shopSetCartPattern, $setCookie, 1, $message);
+    /* Insert code to create cookie after admin login */
+    /* Insert code to remove cookie after admin logout */
+    
+    if ( filePutContentWithPattern($adminLoginFile, $adminLoginPattern, $setCookie,1 , $message) 
+    && filePutContentWithPattern($adminLogoutFile, $adminLogoutPattern, $removeCookie, 1, $message) ) {
+        $message = $lang_module['123host_init_cache_success'];
+        return TRUE;
+    } else {
+        return FALSE;
+    }
+    
+    return TRUE;
+}
+
+/*
+    Xóa các file đã thêm vào admin_login.php và admin_logout.php
+    Run lúc uninstall module để gỡ bỏ module
+*/
+function removeCookieHandle(&$message) {
+    global $lang_module;
+
+    /* Remove Cookie Handle in admin LOGIN file */
+    $adminLoginFile = NV_ROOTDIR . '/includes/core/admin_login.php';
+    $beginAddCookiePattern = "/123HOST LSCache begin add cookie/";
+    $endAddCookiePattern = "/123HOST LSCache end add cookie/";
+
     $adminLogoutFile = NV_ROOTDIR . '/includes/core/admin_logout.php';
     $beginAdminLogoutPattern = "/123HOST LSCache begin remove cookie/";
     $endAdminLogoutPattern = "/123HOST LSCache end remove cookie/";
 
-    $contentByLine = file($adminLogoutFile);
-    $matches  = preg_grep ($beginAdminLogoutPattern, $contentByLine);
-    $numberOfBlock = count($matches);
-   
-    $beginLineNum = null;
-    $endLineNum = null;
-    for ($i=0; $i < $numberOfBlock; $i++) {
-        
-        // Find Begin and End 123HOST LSCache rewrite of Admin LOGOUT 
-        $contentByLine = file($adminLogoutFile);
-        foreach ( $contentByLine as $lineNum => $lineContent ) {
-            if (preg_match($beginAdminLogoutPattern, $lineContent))
-                $beginLineNum = $lineNum;
-
-            if (preg_match($endAdminLogoutPattern, $lineContent))
-                $endLineNum = $lineNum;
-        }
-
-        // Detroy lines
-        if (is_numeric($beginLineNum) && is_numeric($endLineNum)) {
-            foreach ( $contentByLine as $lineNum => $lineContent ) {
-                if ( $lineNum >= $beginLineNum && $lineNum <= $endLineNum ) {
-                    $contentByLine[$lineNum] = "";
-                }
-            } 
-            file_put_contents($adminLogoutFile, implode("", $contentByLine), LOCK_EX);    
-        }
-    }
-
     /* Remove Cookie Handle in shop module */
-    $shopSetCart = NV_ROOTDIR . '/modules/shops/funcs/setcart.php';
+    $shopSetCartFile = NV_ROOTDIR . '/modules/shops/funcs/setcart.php';
+    fileDelContentWithPattern($shopSetCartFile, $beginAddCookiePattern, $endAddCookiePattern, $message);
 
-    if ( file_exists($shopSetCart) ) {
-        $beginshopSetCartPattern = "/123HOST LSCache begin add cookie/";
-        $endshopSetCartPattern = "/123HOST LSCache end add cookie/";
+    /* Remove Cookie Handle in admin LOGIN and LOGOUT file */
 
-        $contentByLine = file($shopSetCart);
-        $matches  = preg_grep ($beginshopSetCartPattern, $contentByLine);
-        $numberOfBlock = count($matches);
-    
-        $beginLineNum = null;
-        $endLineNum = null;
-        for ($i=0; $i < $numberOfBlock; $i++) {
-            
-            $contentByLine = file($shopSetCart);
-
-            foreach ( $contentByLine as $lineNum => $lineContent ) {
-                if (preg_match($beginshopSetCartPattern, $lineContent))
-                    $beginLineNum = $lineNum;
-
-                if (preg_match($endshopSetCartPattern, $lineContent))
-                    $endLineNum = $lineNum;
-            }
-
-            // Detroy lines
-            if (is_numeric($beginLineNum) && is_numeric($endLineNum)) {
-                foreach ( $contentByLine as $lineNum => $lineContent ) {
-                    if ( $lineNum >= $beginLineNum && $lineNum <= $endLineNum ) {
-                        $contentByLine[$lineNum] = "";
-                    }
-                } 
-                file_put_contents($shopSetCart, implode("", $contentByLine), LOCK_EX);    
-            }
-        }
+    if ( fileDelContentWithPattern($adminLoginFile, $beginAddCookiePattern, $endAddCookiePattern, $message) && fileDelContentWithPattern($adminLogoutFile, $beginAdminLogoutPattern, $endAdminLogoutPattern, $message) ) {
+        $message = $lang_module['123host_init_cache_success'];
+        return TRUE;
+    } else {
+        return FALSE;
     }
-    
 }
 
 /*
@@ -416,20 +369,9 @@ function addPurgeCacheHandle(&$message) {
         $message = $lang_module['123host_edit_file_failure'] . $cacheFile;
         return FALSE;
     }
-      
-    /* Insert code to remove cookie after admin logout */
-    $contentByLine = file($cacheFile);
-    
-    $i = 0;
-    foreach ( $contentByLine as $lineNum => $lineContent ) {
-        if ( preg_match($patternForCallFunction, $lineContent) ) {
-            $insertLineNum = $lineNum + 2;
-            array_splice( $contentByLine, $insertLineNum + $i, 0, $contentCallFunction );
-            $i++;
-        }
-    }
 
-    if(file_put_contents($cacheFile, implode("", $contentByLine), LOCK_EX)) {
+    // Thêm $this->sendPurgeLSCache() sau function delMod và delAll
+    if (filePutContentWithPattern($cacheFile, $patternForCallFunction, $contentCallFunction, 2, $message) ) {
         $message = $lang_module['123host_edit_file'] . $cacheFile . $lang_module['123host_success'];
         return TRUE;
     } else {
@@ -446,40 +388,14 @@ function removePurgeCacheHandle(&$message) {
     
     $beginModifyPattern = "/123HOST LSCache begin mofidy/";
     $endModifyPattern = "/123HOST LSCache end mofidy/";
-
-    $contentByLine = file($cacheFile);
     
-
-    $matches  = preg_grep ($beginModifyPattern, $contentByLine);
-    $numberOfBlock = count($matches);
-    
-    for ($i=0; $i < $numberOfBlock; $i++) {
-        
-        // Find Begin and End 123HOST modify
-        $contentByLine = file($cacheFile);
-        foreach ( $contentByLine as $lineNum => $lineContent ) {
-            if (preg_match($beginModifyPattern, $lineContent))
-                $beginLineNum = $lineNum;
-
-            if (preg_match($endModifyPattern, $lineContent))
-                $endLineNum = $lineNum;
-        }
-
-        // Detroy lines
-        if (isset($beginLineNum) && isset($endLineNum)) {
-            foreach ( $contentByLine as $lineNum => $lineContent ) {
-                if ( $lineNum >= $beginLineNum && $lineNum <= $endLineNum ) {
-                    $contentByLine[$lineNum] = "";
-                }
-            } 
-            if(!file_put_contents($cacheFile, implode("", $contentByLine), LOCK_EX)){
-                $message = $lang_module['123host_edit_file_failure'] . $cacheFile;
-                return FALSE;
-            }
-        }
+    if ( fileDelContentWithPattern($cacheFile, $beginModifyPattern, $endModifyPattern, $message) ) {
+        $message = $lang_module['123host_init_cache_success'];
+        return TRUE;
+    } else {
+        return FALSE;
     }
-    $message = $lang_module['123host_edit_file'] . $cacheFile . $lang_module['123host_success'];
-    return TRUE;
+
 }
 
 /*
@@ -506,7 +422,4 @@ function sendPurge($url, $debug = FALSE, &$message) {
         fclose($fp);
         return TRUE;
     }
-}
-function vietTest() {
-    return "you are running";
 }
