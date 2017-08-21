@@ -21,3 +21,8 @@ Tính năng:
 * Không cache khi thêm đơn hàng, thanh toán
 * Hỗ trợ đa ngôn ngữ: Tiếng Việt và Tiếng Anh
 
+Liên kết:
+--------
+
+* Nukeviet Store: https://nukeviet.vn/vi/store/modules/lscnv/
+* Nukeviet Hosting: https://123host.vn/nukeviet-hosting.html
